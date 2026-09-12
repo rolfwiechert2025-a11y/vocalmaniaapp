@@ -1,69 +1,62 @@
-import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="space-y-8 py-4">
+      {/* Hero Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-rose-950 via-slate-900 to-indigo-950 border border-slate-800 text-white p-8 md:p-12 rounded-3xl shadow-2xl space-y-6">
+        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-rose-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        
+        <span className="inline-block bg-rose-500/20 text-rose-300 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-widest border border-rose-500/30">
+          A-cappella-Ensemble
+        </span>
+        
+        <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
+          Moderne Chormusik <br className="hidden md:block"/>mit Leidenschaft
+        </h1>
+        
+        <p className="text-slate-300 max-w-xl text-sm md:text-base leading-relaxed">
+          Erlebt Vocalmania live mit Popsongs, Rockhymnen und modernen Chorsätzen. Hier findet ihr alle Infos zu unseren kommenden Auftritten und Terminen.
+        </p>
+        
+        <div className="pt-2 flex flex-wrap gap-4">
+          <Link 
+            href="/konzerte" 
+            className="bg-gradient-to-r from-rose-500 to-amber-500 text-white font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition text-sm shadow-lg shadow-rose-500/20"
+          >
+            Zu den Konzerte
+          </Link>
+        </div>
+      </div>
+
+      {/* Info Cards */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="bg-slate-900/60 backdrop-blur border border-slate-800 p-6 rounded-2xl shadow-lg space-y-3">
+          <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400 font-bold text-lg">
+            🎤
+          </div>
+          <h2 className="text-xl font-bold text-slate-100">Nächster Auftritt</h2>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            Schaut in unseren Terminkalender, um kein Konzert in eurer Nähe zu verpassen.
           </p>
+          <Link href="/konzerte" className="text-rose-400 font-semibold text-sm inline-block pt-2 hover:underline">
+            Alle Termine ansehen →
+          </Link>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="bg-slate-900/60 backdrop-blur border border-slate-800 p-6 rounded-2xl shadow-lg space-y-3">
+          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-lg">
+            🔒
+          </div>
+          <h2 className="text-xl font-bold text-slate-100">Interner Chor-Bereich</h2>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            Proben-Rückmeldungen, Stimmproben und Noten aus dem Google Drive für angemeldete Mitglieder.
+          </p>
+          <span className="text-slate-500 font-semibold text-sm inline-block pt-2">
+            Login folgt demnächst...
+          </span>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
