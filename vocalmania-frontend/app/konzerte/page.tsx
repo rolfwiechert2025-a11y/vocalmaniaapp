@@ -53,10 +53,8 @@ async function fetchGoogleDocContent(fileId: string): Promise<ParsedEventData> {
     });
 
     let rawText = typeof response.data === 'string' ? response.data : '';
-    // HTML-Müll entfernen
     rawText = rawText.replace(/<[^>]*>?/gm, '');
 
-    // Hilfsfunktion zum Extrahieren von Abschnitten zwischen Markierungen (z.B. [Kurzbeschreibung] bis zum nächsten Eckigen Klammer-Block)
     function extractSection(tag: string): string {
       const regex = new RegExp(`\\[${tag}\\]\\s*([\\s\\S]*?)(?=\\s*\\[[a-zA-ZäöüÄÖÜß]+\\]|$)`, 'i');
       const match = rawText.match(regex);
@@ -69,7 +67,6 @@ async function fetchGoogleDocContent(fileId: string): Promise<ParsedEventData> {
     const ticketUrl = extractSection('Ticketlink') || null;
     const customLocation = extractSection('Ort') || null;
 
-    // Bild-ID aus dem Bild-Link extrahieren und in das performante lh3-Format umwandeln
     let imageUrl: string | null = null;
     const fileIdMatch = rawImage.match(/(?:\/file\/d\/|\/open\?id=|\/document\/d\/|\/d\/|d\/)([a-zA-Z0-9_-]{25,})/);
     if (fileIdMatch && fileIdMatch[1]) {
@@ -115,16 +112,13 @@ async function getPublicEvents() {
           customLocation: null,
         };
 
-        // Suche nach dem Google-Doc-Link in der Kalenderbeschreibung
         const docMatch = rawDescription.match(/(?:docs\.google\.com\/document\/d\/|\/document\/d\/)([a-zA-Z0-9_-]+)/);
         if (docMatch && docMatch[1]) {
           docData = await fetchGoogleDocContent(docMatch[1]);
         } else {
-          // Fallback, falls noch alter Text direkt im Kalender steht
           docData.shortDesc = rawDescription.replace(/<[^>]*>?/gm, '').trim();
         }
 
-        // Ort-Priorität: Wenn im Google Doc ein Ort angegeben ist, nimm diesen, sonst den aus dem Kalender
         const finalLocation = docData.customLocation || event.location || null;
 
         return {
@@ -149,8 +143,8 @@ export default async function KonzertePage() {
   const calendarEvents = await getPublicEvents();
 
   return (
-    <div className="space-y-6">
-      <div className="border-b border-slate-200 pb-4">
+    <div className="space-y-4">
+      <div className="border-b border-slate-200 pb-3">
         <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Anstehende Konzerte</h1>
         <p className="text-slate-600 mt-1">Erlebe Vocalmania live bei unseren nächsten Auftritten.</p>
       </div>
@@ -160,21 +154,39 @@ export default async function KonzertePage() {
           Aktuell sind keine öffentlichen Termine im Kalender hinterlegt.
         </div>
       ) : (
-        <div className="grid gap-6">
+        <div className="grid gap-4">
           {calendarEvents.map((event, index) => {
             const startDate = new Date(event.start?.dateTime || event.start?.date || "");
             const formattedDate = !isNaN(startDate.getTime()) 
               ? startDate.toLocaleDateString("de-DE", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
               : "Datum auf Anfrage";
 
+            // Google Maps Link URL generieren
+            const mapsUrl = event.resolvedLocation 
+              ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.resolvedLocation)}` 
+              : null;
+
             return (
-              <div key={event.id || index} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <div key={event.id || index} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
                 <div>
                   <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">{formattedDate}</span>
-                  <h2 className="text-xl font-bold text-slate-900 mt-1">{event.summary || "Kein Titel"}</h2>
+                  <h2 className="text-xl font-bold text-slate-900 mt-0.5">{event.summary || "Kein Titel"}</h2>
+                  
                   {event.resolvedLocation && (
-                    <p className="text-sm text-slate-600 mt-1 flex items-center gap-1">
-                      <span>📍</span> {event.resolvedLocation}
+                    <p className="text-sm text-slate-600 mt-1 flex items-center gap-1.5">
+                      <span>📍</span> 
+                      {mapsUrl ? (
+                        <a 
+                          href={mapsUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="text-indigo-600 hover:underline hover:text-indigo-800 transition-colors"
+                        >
+                          {event.resolvedLocation}
+                        </a>
+                      ) : (
+                        event.resolvedLocation
+                      )}
                     </p>
                   )}
                 </div>
@@ -186,7 +198,7 @@ export default async function KonzertePage() {
 
                 {/* Google Drive Bild */}
                 {event.imageUrl && (
-                  <div className="relative w-full h-64 md:h-80 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
+                  <div className="relative w-full h-56 md:h-72 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
                     <img 
                       src={event.imageUrl} 
                       alt={event.summary || "Konzert Plakat"} 
@@ -195,7 +207,7 @@ export default async function KonzertePage() {
                   </div>
                 )}
 
-                {/* Ticket-Link Button (falls vorhanden) */}
+                {/* Ticket-Link Button */}
                 {event.ticketUrl && (
                   <div>
                     <a 
@@ -210,13 +222,14 @@ export default async function KonzertePage() {
                 )}
 
                 {/* Langbeschreibung als Aufklapp-Menü */}
+{/* Langbeschreibung als Aufklapp-Menü */}
                 {event.resolvedLongDesc && (
-                  <details className="group border-t border-slate-100 pt-3">
+                  <details className="group border-t border-slate-100 pt-2.5">
                     <summary className="text-xs font-semibold text-indigo-600 cursor-pointer list-none flex items-center justify-between">
                       <span>Mehr Details & Infos anzeigen</span>
                       <span className="group-open:rotate-180 transition-transform">▼</span>
                     </summary>
-                    <div className="mt-3 text-sm text-slate-600 space-y-3 whitespace-pre-line">
+                    <div className="mt-2.5 text-sm text-slate-600 space-y-1 whitespace-pre-line">
                       {String(event.resolvedLongDesc)}
                     </div>
                   </details>
