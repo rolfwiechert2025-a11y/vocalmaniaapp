@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
+import Image from "next/image";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,10 +37,12 @@ export default function RootLayout({
         {/* Header (Mobil & Desktop) */}
         <header className="flex justify-between items-center px-4 md:px-8 py-4 bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
           <Link href="/" className="flex items-center gap-3 group">
-            <img 
+            <Image 
               src="/logo_white_background.svg" 
               alt="Vocalmania Logo" 
-              className="w-9 h-9 rounded-xl object-cover shadow-sm group-hover:scale-105 transition-transform" 
+              width={36} 
+              height={36} 
+              className="rounded-xl object-contain shadow-sm group-hover:scale-105 transition-transform" 
             />
             <span className="font-extrabold text-xl text-slate-900 tracking-tight">
               Vocalmania
