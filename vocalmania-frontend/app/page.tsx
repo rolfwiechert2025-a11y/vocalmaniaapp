@@ -40,7 +40,7 @@ export default function Home() {
             Schaut in unseren Terminkalender, um kein Konzert in eurer Nähe zu verpassen.
           </p>
           <Link href="/konzerte" className="text-rose-400 font-semibold text-sm inline-block pt-2 hover:underline">
-            Alle Termine ansehen →
+            Alle Konzerte  ansehen →
           </Link>
         </div>
 
