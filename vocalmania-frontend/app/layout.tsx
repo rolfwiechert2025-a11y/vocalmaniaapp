@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-title: "Vocalmania | A-cappella-Ensemble",
+  title: "Vocalmania | A-cappella-Ensemble",
   description: "Öffentliche Konzerte und interne Chor-App für Vocalmania",
   manifest: "/manifest.json",
   appleWebApp: {
@@ -33,12 +33,21 @@ export default function RootLayout({
     <html lang="de">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 text-slate-900 pb-20 md:pb-0`}>
         
-        {/* Desktop Header */}
-        <header className="hidden md:flex justify-between items-center px-8 py-4 bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-          <div className="font-extrabold text-xl text-indigo-600 tracking-tight">
-            Vocalmania 🎶
-          </div>
-          <nav className="flex gap-6 font-medium text-sm text-slate-600">
+        {/* Header (Mobil & Desktop) */}
+        <header className="flex justify-between items-center px-4 md:px-8 py-4 bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+          <Link href="/" className="flex items-center gap-3 group">
+            <img 
+              src="/logo_white_background.svg" 
+              alt="Vocalmania Logo" 
+              className="w-9 h-9 rounded-xl object-cover shadow-sm group-hover:scale-105 transition-transform" 
+            />
+            <span className="font-extrabold text-xl text-slate-900 tracking-tight">
+              Vocalmania
+            </span>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex gap-6 font-medium text-sm text-slate-600">
             <Link href="/" className="hover:text-indigo-600 transition">Startseite</Link>
             <Link href="/konzerte" className="hover:text-indigo-600 transition">Konzerte</Link>
             <Link href="#" className="hover:text-indigo-600 transition">Mediathek</Link>
