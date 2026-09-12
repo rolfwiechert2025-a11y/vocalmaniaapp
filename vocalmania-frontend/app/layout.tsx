@@ -14,8 +14,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vocalmania Chormanagement",
+title: "Vocalmania | A-cappella-Ensemble",
   description: "Öffentliche Konzerte und interne Chor-App für Vocalmania",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Vocalmania",
+  },
 };
 
 export default function RootLayout({
