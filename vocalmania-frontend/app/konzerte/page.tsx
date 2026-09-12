@@ -144,9 +144,10 @@ export default async function KonzertePage() {
 
   return (
     <div className="space-y-4">
-      <div className="border-b border-slate-200 pb-3">
-        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Anstehende Konzerte</h1>
-        <p className="text-slate-600 mt-1">Erlebe Vocalmania live bei unseren nächsten Auftritten.</p>
+      {/* Harmonisch abgestimmter Kopfbereich */}
+      <div className="border-b border-slate-200 pb-4">
+        <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Anstehende Konzerte</h1>
+        <p className="text-slate-500 text-sm mt-1">Erlebe Vocalmania live bei unseren nächsten Auftritten.</p>
       </div>
 
       {calendarEvents.length === 0 ? (
@@ -161,7 +162,6 @@ export default async function KonzertePage() {
               ? startDate.toLocaleDateString("de-DE", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
               : "Datum auf Anfrage";
 
-            // Google Maps Link URL generieren
             const mapsUrl = event.resolvedLocation 
               ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.resolvedLocation)}` 
               : null;
@@ -222,7 +222,6 @@ export default async function KonzertePage() {
                 )}
 
                 {/* Langbeschreibung als Aufklapp-Menü */}
-{/* Langbeschreibung als Aufklapp-Menü */}
                 {event.resolvedLongDesc && (
                   <details className="group border-t border-slate-100 pt-2.5">
                     <summary className="text-xs font-semibold text-indigo-600 cursor-pointer list-none flex items-center justify-between">

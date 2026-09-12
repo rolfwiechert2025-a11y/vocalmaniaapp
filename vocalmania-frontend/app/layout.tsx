@@ -3,7 +3,15 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Glegoo } from "next/font/google";
 import "./globals.css";
+
+// Glegoo von Google Fonts laden
+const glegoo = Glegoo({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-glegoo",
+});
 
 export default function RootLayout({
   children,
@@ -13,7 +21,6 @@ export default function RootLayout({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  // Scroll-Listener, um den Pfeil ab 300px Scroll-Höhe einzublenden
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 300) {
@@ -35,12 +42,11 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="de">
-      <body className="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col relative">
+    <html lang="de" className={glegoo.variable}>
+      <body className="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col relative font-[family-name:var(--font-glegoo)]">
         
-        {/* MOBILER HEADER (Weiß, Burger links, SVG-Logo exakt in der Mitte) */}
+        {/* MOBILER HEADER */}
         <header className="md:hidden bg-white text-slate-900 border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-sm">
-          {/* Burger Button (3 Striche) links */}
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-2 rounded-xl text-slate-700 hover:bg-slate-100 focus:outline-none transition-colors"
@@ -48,16 +54,13 @@ export default function RootLayout({
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isMobileMenuOpen ? (
-                // X-Icon wenn offen
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               ) : (
-                // 3 Striche wenn zu
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               )}
             </svg>
           </button>
 
-          {/* Perfekt zentriertes SVG-Logo */}
           <div className="absolute left-1/2 transform -translate-x-1/2">
             <Link href="/" className="block">
               <Image 
@@ -71,11 +74,9 @@ export default function RootLayout({
             </Link>
           </div>
 
-          {/* Unsichtbarer Platzhalter rechts für Symmetrie */}
           <div className="w-10"></div>
         </header>
 
-        {/* Backdrop-Overlay, wenn Menü offen ist */}
         {isMobileMenuOpen && (
           <div 
             onClick={() => setIsMobileMenuOpen(false)}
@@ -85,16 +86,14 @@ export default function RootLayout({
 
         <div className="flex-1 flex flex-col md:flex-row relative overflow-x-hidden">
           
-          {/* DUNKLES SEITENMENÜ */}
+          {/* SEITENMENÜ */}
           <aside className={`
             fixed md:static inset-y-0 left-0 z-40 w-72 bg-slate-950 text-slate-200 border-r border-slate-800 p-6 
             flex flex-col justify-between transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none
             ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
             top-[61px] md:top-0
           `}>
-            {/* OBERER BEREICH: Logo (Desktop) & Navigation */}
             <div className="space-y-8">
-              {/* Chor Logo (Nur Desktop) */}
               <div className="hidden md:block">
                 <Link href="/" className="block">
                   <Image 
@@ -108,7 +107,6 @@ export default function RootLayout({
                 </Link>
               </div>
 
-              {/* Bereich 1: Link-Navigation */}
               <nav className="space-y-1.5" onClick={() => setIsMobileMenuOpen(false)}>
                 <p className="px-3 text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-2">Menü</p>
                 <Link 
@@ -123,10 +121,21 @@ export default function RootLayout({
                 >
                   Konzerte & Termine
                 </Link>
+                 <Link 
+                  href="/bilder" 
+                  className="block px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-white transition-colors"
+                >
+                  Bilder
+                </Link>
+                <Link 
+                  href="/kontakte" 
+                  className="block px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-white transition-colors"
+                >
+                  Kontakt
+                </Link>
               </nav>
             </div>
 
-            {/* UNTERER BEREICH: Bereich 2 (Optisch abgesetzter Kontakt-Bereich) */}
             <div className="mt-8 pt-5 border-t border-slate-800/80 bg-slate-900/50 -mx-6 -mb-6 p-6 space-y-4 text-xs text-slate-300 rounded-b-none">
               <div>
                 <p className="font-bold text-slate-100 uppercase tracking-wider mb-1">Kontakt</p>
@@ -160,7 +169,6 @@ export default function RootLayout({
 
         </div>
 
-        {/* SCROLL-TO-TOP PFEIL (Unten rechts, erscheint ab 300px Scroll-Höhe) */}
         {showScrollTop && (
           <button
             onClick={scrollToTop}
