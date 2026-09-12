@@ -1,14 +1,14 @@
 import { google } from 'googleapis';
 
 interface CalendarEvent {
-  id: string;
-  summary?: string;
-  description?: string;
+  id?: string | null;
+  summary?: string | null;
+  description?: string | null;
   start?: {
-    dateTime?: string;
-    date?: string;
+    dateTime?: string | null;
+    date?: string | null;
   };
-  location?: string;
+  location?: string | null;
 }
 
 async function getPublicEvents(): Promise<CalendarEvent[]> {
@@ -53,14 +53,14 @@ export default async function KonzertePage() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {events.map((event) => {
+          {events.map((event, index) => {
             const startDate = new Date(event.start?.dateTime || event.start?.date || "");
             const formattedDate = !isNaN(startDate.getTime()) 
               ? startDate.toLocaleDateString("de-DE", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
               : "Datum auf Anfrage";
 
             return (
-              <div key={event.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <div key={event.id || index} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">{formattedDate}</span>
                 <h2 className="text-xl font-bold text-slate-900 mt-1">{event.summary || "Kein Titel"}</h2>
                 {event.location && (
