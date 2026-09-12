@@ -11,16 +11,87 @@ interface CalendarEvent {
   location?: string | null;
 }
 
-async function getPublicEvents(): Promise<CalendarEvent[]> {
+interface ParsedEventData {
+  shortDesc: string;
+  longDesc: string;
+  imageUrl: string | null;
+  ticketUrl: string | null;
+  customLocation: string | null;
+}
+
+// 1. Google Auth initialisieren
+function getGoogleAuth() {
+  return new google.auth.GoogleAuth({
+    credentials: {
+      client_email: process.env.GOOGLE_CLIENT_EMAIL,
+      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    },
+    scopes: [
+      'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/drive.readonly',
+    ],
+  });
+}
+
+// 2. Google Doc Inhalt laden und Sektoren parsen
+async function fetchGoogleDocContent(fileId: string): Promise<ParsedEventData> {
+  const defaultData: ParsedEventData = {
+    shortDesc: '',
+    longDesc: '',
+    imageUrl: null,
+    ticketUrl: null,
+    customLocation: null,
+  };
+
   try {
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: process.env.GOOGLE_CLIENT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      },
-      scopes: ['https://www.googleapis.com/auth/calendar.readonly'],
+    const auth = getGoogleAuth();
+    const drive = google.drive({ version: 'v3', auth });
+    
+    const response = await drive.files.export({
+      fileId: fileId,
+      mimeType: 'text/plain',
     });
 
+    let rawText = typeof response.data === 'string' ? response.data : '';
+    // HTML-Müll entfernen
+    rawText = rawText.replace(/<[^>]*>?/gm, '');
+
+    // Hilfsfunktion zum Extrahieren von Abschnitten zwischen Markierungen (z.B. [Kurzbeschreibung] bis zum nächsten Eckigen Klammer-Block)
+    function extractSection(tag: string): string {
+      const regex = new RegExp(`\\[${tag}\\]\\s*([\\s\\S]*?)(?=\\s*\\[[a-zA-ZäöüÄÖÜß]+\\]|$)`, 'i');
+      const match = rawText.match(regex);
+      return match ? match[1].trim() : '';
+    }
+
+    const shortDesc = extractSection('Kurzbeschreibung');
+    const longDesc = extractSection('Beschreibung');
+    const rawImage = extractSection('Bild');
+    const ticketUrl = extractSection('Ticketlink') || null;
+    const customLocation = extractSection('Ort') || null;
+
+    // Bild-ID aus dem Bild-Link extrahieren und in das performante lh3-Format umwandeln
+    let imageUrl: string | null = null;
+    const fileIdMatch = rawImage.match(/(?:\/file\/d\/|\/open\?id=|\/document\/d\/|\/d\/|d\/)([a-zA-Z0-9_-]{25,})/);
+    if (fileIdMatch && fileIdMatch[1]) {
+      imageUrl = `https://lh3.googleusercontent.com/d/${fileIdMatch[1]}`;
+    }
+
+    return {
+      shortDesc,
+      longDesc,
+      imageUrl,
+      ticketUrl,
+      customLocation,
+    };
+  } catch (error) {
+    console.error(`Fehler beim Laden des Google Docs (${fileId}):`, error);
+    return defaultData;
+  }
+}
+
+async function getPublicEvents() {
+  try {
+    const auth = getGoogleAuth();
     const calendar = google.calendar({ version: 'v3', auth });
 
     const response = await calendar.events.list({
@@ -30,7 +101,44 @@ async function getPublicEvents(): Promise<CalendarEvent[]> {
       orderBy: 'startTime',
     });
 
-    return response.data.items || [];
+    const events = response.data.items || [];
+
+    const processedEvents = await Promise.all(
+      events.map(async (event) => {
+        const rawDescription = event.description || "";
+        
+        let docData: ParsedEventData = {
+          shortDesc: '',
+          longDesc: '',
+          imageUrl: null,
+          ticketUrl: null,
+          customLocation: null,
+        };
+
+        // Suche nach dem Google-Doc-Link in der Kalenderbeschreibung
+        const docMatch = rawDescription.match(/(?:docs\.google\.com\/document\/d\/|\/document\/d\/)([a-zA-Z0-9_-]+)/);
+        if (docMatch && docMatch[1]) {
+          docData = await fetchGoogleDocContent(docMatch[1]);
+        } else {
+          // Fallback, falls noch alter Text direkt im Kalender steht
+          docData.shortDesc = rawDescription.replace(/<[^>]*>?/gm, '').trim();
+        }
+
+        // Ort-Priorität: Wenn im Google Doc ein Ort angegeben ist, nimm diesen, sonst den aus dem Kalender
+        const finalLocation = docData.customLocation || event.location || null;
+
+        return {
+          ...event,
+          resolvedShortDesc: docData.shortDesc,
+          resolvedLongDesc: docData.longDesc,
+          imageUrl: docData.imageUrl,
+          ticketUrl: docData.ticketUrl,
+          resolvedLocation: finalLocation,
+        };
+      })
+    );
+
+    return processedEvents;
   } catch (error) {
     console.error('Fehler beim Laden des Kalenders:', error);
     return [];
@@ -38,7 +146,7 @@ async function getPublicEvents(): Promise<CalendarEvent[]> {
 }
 
 export default async function KonzertePage() {
-  const events = await getPublicEvents();
+  const calendarEvents = await getPublicEvents();
 
   return (
     <div className="space-y-6">
@@ -47,29 +155,71 @@ export default async function KonzertePage() {
         <p className="text-slate-600 mt-1">Erlebe Vocalmania live bei unseren nächsten Auftritten.</p>
       </div>
 
-      {events.length === 0 ? (
+      {calendarEvents.length === 0 ? (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center text-slate-500">
           Aktuell sind keine öffentlichen Termine im Kalender hinterlegt.
         </div>
       ) : (
-        <div className="grid gap-4">
-          {events.map((event, index) => {
+        <div className="grid gap-6">
+          {calendarEvents.map((event, index) => {
             const startDate = new Date(event.start?.dateTime || event.start?.date || "");
             const formattedDate = !isNaN(startDate.getTime()) 
               ? startDate.toLocaleDateString("de-DE", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
               : "Datum auf Anfrage";
 
             return (
-              <div key={event.id || index} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">{formattedDate}</span>
-                <h2 className="text-xl font-bold text-slate-900 mt-1">{event.summary || "Kein Titel"}</h2>
-                {event.location && (
-                  <p className="text-sm text-slate-600 mt-1 flex items-center gap-1">
-                    <span>📍</span> {event.location}
-                  </p>
+              <div key={event.id || index} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div>
+                  <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">{formattedDate}</span>
+                  <h2 className="text-xl font-bold text-slate-900 mt-1">{event.summary || "Kein Titel"}</h2>
+                  {event.resolvedLocation && (
+                    <p className="text-sm text-slate-600 mt-1 flex items-center gap-1">
+                      <span>📍</span> {event.resolvedLocation}
+                    </p>
+                  )}
+                </div>
+
+                {/* Kurzbeschreibung */}
+                {event.resolvedShortDesc && (
+                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{event.resolvedShortDesc}</p>
                 )}
-                {event.description && (
-                  <p className="text-sm text-slate-500 mt-2">{event.description}</p>
+
+                {/* Google Drive Bild */}
+                {event.imageUrl && (
+                  <div className="relative w-full h-64 md:h-80 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
+                    <img 
+                      src={event.imageUrl} 
+                      alt={event.summary || "Konzert Plakat"} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+
+                {/* Ticket-Link Button (falls vorhanden) */}
+                {event.ticketUrl && (
+                  <div>
+                    <a 
+                      href={event.ticketUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl shadow-sm transition-colors"
+                    >
+                      🎟️ Tickets sichern
+                    </a>
+                  </div>
+                )}
+
+                {/* Langbeschreibung als Aufklapp-Menü */}
+                {event.resolvedLongDesc && (
+                  <details className="group border-t border-slate-100 pt-3">
+                    <summary className="text-xs font-semibold text-indigo-600 cursor-pointer list-none flex items-center justify-between">
+                      <span>Mehr Details & Infos anzeigen</span>
+                      <span className="group-open:rotate-180 transition-transform">▼</span>
+                    </summary>
+                    <div className="mt-3 text-sm text-slate-600 space-y-3 whitespace-pre-line">
+                      {String(event.resolvedLongDesc)}
+                    </div>
+                  </details>
                 )}
               </div>
             );
