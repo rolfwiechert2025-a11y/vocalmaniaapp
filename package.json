@@ -2,5 +2,5 @@
   "dependencies": {
     "googleapis": "^180.0.0",
     "next-auth": "^4.24.15"
-  }
+  } 
 }
