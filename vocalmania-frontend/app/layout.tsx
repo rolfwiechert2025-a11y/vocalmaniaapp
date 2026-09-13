@@ -139,6 +139,18 @@ export default function RootLayout({
                 >
                   Mediathek
                 </Link>
+                <Link 
+                  href="/login" 
+                  className="block px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-white transition-colors"
+                >
+                  Login
+                </Link>
+                <Link 
+                  href="/intern" 
+                  className="block px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-white transition-colors"
+                >
+                  Interner Bereich
+                </Link>
               </nav>
             </div>
 
