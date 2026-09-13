@@ -1,4 +1,6 @@
 import { google } from 'googleapis';
+import { getGoogleAuth } from '@/lib/googleauth';
+import Image from 'next/image';
 
 interface CalendarEvent {
   id?: string | null;
@@ -19,21 +21,7 @@ interface ParsedEventData {
   customLocation: string | null;
 }
 
-// 1. Google Auth initialisieren
-function getGoogleAuth() {
-  return new google.auth.GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_CLIENT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    },
-    scopes: [
-      'https://www.googleapis.com/auth/calendar.readonly',
-      'https://www.googleapis.com/auth/drive.readonly',
-    ],
-  });
-}
-
-// 2. Google Doc Inhalt laden und Sektoren parsen
+// Google Doc Inhalt laden und Sektoren parsen
 async function fetchGoogleDocContent(fileId: string): Promise<ParsedEventData> {
   const defaultData: ParsedEventData = {
     shortDesc: '',
@@ -143,13 +131,31 @@ export default async function KonzertePage() {
   const calendarEvents = await getPublicEvents();
 
   return (
-    <div className="space-y-4">
-      {/* Harmonisch abgestimmter Kopfbereich */}
-      <div className="border-b border-slate-200 pb-4">
-        <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Anstehende Konzerte</h1>
-        <p className="text-slate-500 text-sm mt-1">Erlebe Vocalmania live bei unseren nächsten Auftritten.</p>
+    <div className="space-y-6">
+      
+      {/* 1. HERO-BEREICH (Volle Breite im Chor-Bild ohne Rahmen, analog zu Bilder & Kontakt) */}
+      <div className="relative w-full h-72 md:h-96 bg-slate-900 -mx-6 md:-mx-10 -mt-6 md:-mt-10 mb-8 overflow-hidden shadow-sm">
+        <Image 
+          src="/DSC_9566-2-fertig.jpg" 
+          alt="Vocalmania Chor" 
+          fill 
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+        
+        {/* Überschrift im Bild */}
+        <div className="absolute bottom-6 left-6 md:left-10 z-10 text-white space-y-1">
+          <h1 className="text-3xl md:text-5xl font-black tracking-tight uppercase">
+            Anstehende Konzerte
+          </h1>
+          <p className="text-xs md:text-sm font-bold text-indigo-400 tracking-[0.25em]">
+            Erlebe Vocalmania live
+          </p>
+        </div>
       </div>
 
+      {/* 2. KONZERTE-LISTE MIT DEN BEWÄHRTEN ABGESETZTEN KACHELN */}
       {calendarEvents.length === 0 ? (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center text-slate-500">
           Aktuell sind keine öffentlichen Termine im Kalender hinterlegt.
