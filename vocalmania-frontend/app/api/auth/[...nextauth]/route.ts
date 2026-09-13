@@ -23,7 +23,7 @@ export const authOptions = {
     },
   },
   pages: {
-    signIn: '/intern/login', // Eigene Login-Seite, die wir gleich erstellen
+    signIn: '/intern/login', // Eigene Login-Seite, die wir gleich erstellen ddd
   },
 };
 

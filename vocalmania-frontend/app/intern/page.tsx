@@ -50,7 +50,7 @@ export default async function InternDashboardPage() {
           </div>
         </div>
 
-        {/* Schnellzugriff-Kacheln für den internen Bereich */}
+        {/* Schnellzugriff-Kacheln für den internen Bereich dd*/}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
           <Link href="/intern/bilder" className="group block p-6 bg-slate-50 border border-slate-200 hover:border-indigo-600 transition-all space-y-2">

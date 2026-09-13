@@ -28,7 +28,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* 2. DURCHGEHENDER WEISSER INHALTSBEREICH */}
+      {/* 2. DURCHGEHENDER WEISSER INHALTSBEREICH   */}
       <div className="bg-white -mx-6 md:-mx-10 px-6 md:px-10 py-12 border-b border-slate-200 max-w-xl mx-auto text-center space-y-6">
         
         <div className="space-y-2">
