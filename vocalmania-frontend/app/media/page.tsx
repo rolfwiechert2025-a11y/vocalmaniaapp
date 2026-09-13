@@ -69,10 +69,10 @@ export default async function MediaPage() {
   const mediaItems = await fetchMediaFromDoc(process.env.PUBLIC_MEDIA_DOC_ID || "");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-0">
       
-      {/* 1. HERO-BEREICH (Volle Breite im Chor-Bild ohne Rahmen) */}
-      <div className="relative w-full h-72 md:h-96 bg-slate-900 -mx-6 md:-mx-10 -mt-6 md:-mt-10 mb-8 overflow-hidden shadow-sm">
+      {/* 1. HERO-BEREICH (Volle Breite ohne Rahmen) */}
+      <div className="relative w-full h-72 md:h-96 bg-slate-900 -mx-6 md:-mx-10 -mt-6 md:-mt-10 mb-8 overflow-hidden">
         <Image 
           src="/DSC_9566-2-fertig.jpg" 
           alt="Vocalmania Chor" 
@@ -93,67 +93,75 @@ export default async function MediaPage() {
         </div>
       </div>
 
-      {/* 2. MEDIA-LISTE MIT DEN BEWÄHRTEN ABGESETZTEN KACHELN */}
-      {mediaItems.length === 0 ? (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center text-slate-500">
-          Aktuell sind keine Tonbeiträge oder Videos im Google Doc hinterlegt.
+      {/* 2. DURCHGEHENDER WEISSER INHALTSBEREICH (Ohne abgerundete Ecken) */}
+      <div className="bg-white -mx-6 md:-mx-10 px-6 md:px-10 py-8 space-y-10 border-b border-slate-200">
+        
+        <div className="border-b border-slate-200 pb-3">
+          <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide">Audio & Video Aufnahmen</h2>
+          <p className="text-sm text-slate-500 mt-0.5">Erlebe unsere musikalischen Beiträge im direkten Player.</p>
         </div>
-      ) : (
-        <div className="grid gap-6">
-          {mediaItems.map((item, index) => {
-            const embedUrl = getYouTubeEmbedUrl(item.youtubeUrl);
 
-            return (
-              <div key={index} className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                <div>
-                  <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">YouTube Beitrag</span>
-                  <h2 className="text-xl font-bold text-slate-900 mt-0.5">{item.titel}</h2>
-                </div>
+        {mediaItems.length === 0 ? (
+          <p className="text-sm text-slate-500 py-6">Aktuell sind keine Tonbeiträge oder Videos im Google Doc hinterlegt.</p>
+        ) : (
+          <div className="space-y-12">
+            {mediaItems.map((item, index) => {
+              const embedUrl = getYouTubeEmbedUrl(item.youtubeUrl);
 
-                {/* YouTube Video Player oder Vorschaubild */}
-                {embedUrl ? (
-                  <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-slate-900 border border-slate-200 shadow-sm">
-                    <iframe 
-                      src={embedUrl} 
-                      title={item.titel}
-                      className="w-full h-full border-0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    ></iframe>
+              return (
+                <div key={index} className={`space-y-4 ${index !== 0 ? 'pt-8 border-t border-slate-100' : ''}`}>
+                  <div>
+                    <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">YouTube Beitrag</span>
+                    <h3 className="text-xl font-bold text-slate-900 mt-0.5">{item.titel}</h3>
                   </div>
-                ) : (
-                  item.vorschaubild && (
-                    <div className="relative w-full h-56 md:h-80 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
-                      <img 
-                        src={item.vorschaubild} 
-                        alt={item.titel} 
-                        className="w-full h-full object-cover"
-                      />
+
+                  {/* YouTube Video Player oder Vorschaubild */}
+                  {embedUrl ? (
+                    <div className="relative w-full aspect-video bg-slate-900 border border-slate-200 shadow-sm overflow-hidden">
+                      <iframe 
+                        src={embedUrl} 
+                        title={item.titel}
+                        className="w-full h-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
                     </div>
-                  )
-                )}
+                  ) : (
+                    item.vorschaubild && (
+                      <div className="relative w-full h-56 md:h-80 bg-slate-100 border border-slate-200 overflow-hidden">
+                        <img 
+                          src={item.vorschaubild} 
+                          alt={item.titel} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )
+                  )}
 
-                {/* Beschreibung */}
-                {item.beschreibung && (
-                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{item.beschreibung}</p>
-                )}
+                  {/* Beschreibung */}
+                  {item.beschreibung && (
+                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{item.beschreibung}</p>
+                  )}
 
-                {/* Externer Link Fallback falls jemand direkt zu YouTube möchte */}
-                <div>
-                  <a 
-                    href={item.youtubeUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl shadow-sm transition-colors"
-                  >
-                    <span>▶️</span> Auf YouTube ansehen
-                  </a>
+                  {/* Externer Link Fallback */}
+                  <div>
+                    <a 
+                      href={item.youtubeUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors"
+                    >
+                      <span>▶️</span> Auf YouTube ansehen
+                    </a>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+
+      </div>
+
     </div>
   );
 }
