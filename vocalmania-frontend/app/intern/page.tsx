@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -70,7 +70,14 @@ export default async function InternDashboardPage() {
               Stimmproben, Choraufnahmen und Video-Tutorials zum Üben der einzelnen Stimmen.
             </p>
           </Link>
-
+            <Link href="/intern/termine" className="group block p-6 bg-slate-50 border border-slate-200 hover:border-indigo-600 transition-all space-y-2">
+            <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                Interne Termine &rarr;
+            </h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+                Probenpläne, Chorwochenenden und anstehende Auftritte im internen Kalender.
+            </p>
+            </Link>
         </div>
 
       </div>
