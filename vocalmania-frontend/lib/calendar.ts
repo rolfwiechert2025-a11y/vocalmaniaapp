@@ -11,7 +11,8 @@ export interface AttendeeDetail {
   vorname: string;
   nachname: string;
   registerShort: string;
-  status: 'yes' | 'maybe' | 'no';
+  status: 'yes' | 'maybe' | 'no' | null;
+  updatedAt?: string | null;
 }
 
 export interface CalendarEvent {
@@ -52,39 +53,54 @@ export async function fetchInternalCalendarEvents(userEmail?: string): Promise<C
 
     if (eventIds.length === 0) return [];
 
-    // Hier wurde von 'register' auf 'backend_registers' angepasst
-    const dbResult = await pool.query(
-      `SELECT ea.event_id, ea.status, m.id as member_id, m.vorname, m.nachname, m.gmail, r.description_short as register_short
-       FROM event_attendance ea
-       JOIN members m ON ea.member_id = m.id
+    // 1. Alle Mitglieder und Register einmalig laden
+    const membersResult = await pool.query(
+      `SELECT m.id as member_id, m.vorname, m.nachname, m.gmail, r.description_short as register_short
+       FROM members m
        LEFT JOIN backend_registers r ON m.register_id = r.id
-       WHERE ea.event_id = ANY($1)`,
+       ORDER BY m.nachname, m.vorname`
+    );
+    const allMembers = membersResult.rows;
+
+    // 2. Alle Attendance-Einträge für diese Events laden
+    const attendanceResult = await pool.query(
+      `SELECT event_id, member_id, status, updated_at
+       FROM event_attendance
+       WHERE event_id = ANY($1)`,
       [eventIds]
     );
-
-    const rows = dbResult.rows;
+    const allAttendance = attendanceResult.rows;
 
     return items.map(item => {
       const eventId = item.id || '';
-      const eventRows = rows.filter(r => r.event_id === eventId);
+      const eventAttendance = allAttendance.filter(a => a.event_id === eventId);
 
-      const yes = eventRows.filter(r => r.status === 'yes').length;
-      const maybe = eventRows.filter(r => r.status === 'maybe').length;
-      const no = eventRows.filter(r => r.status === 'no').length;
+      // Für jedes Mitglied den Status für DIESES Event ermitteln (falls vorhanden)
+      const attendeesList: AttendeeDetail[] = allMembers.map(member => {
+        const att = eventAttendance.find(a => a.member_id === member.member_id);
+        return {
+          memberId: member.member_id,
+          vorname: member.vorname,
+          nachname: member.nachname,
+          registerShort: member.register_short || 'Unbekannt',
+          status: att ? (att.status as 'yes' | 'maybe' | 'no') : null,
+          updatedAt: att ? att.updated_at : null,
+        };
+      });
 
-      const attendeesList: AttendeeDetail[] = eventRows.map(r => ({
-        memberId: r.member_id,
-        vorname: r.vorname,
-        nachname: r.nachname,
-        registerShort: r.register_short || 'Unbekannt',
-        status: r.status,
-      }));
+      const respondedRows = attendeesList.filter(a => a.status !== null);
+      const yes = respondedRows.filter(r => r.status === 'yes').length;
+      const maybe = respondedRows.filter(r => r.status === 'maybe').length;
+      const no = respondedRows.filter(r => r.status === 'no').length;
 
       let userStatus: 'yes' | 'maybe' | 'no' | null = null;
       if (userEmail) {
-        const userRow = eventRows.find(r => r.gmail === userEmail);
-        if (userRow) {
-          userStatus = userRow.status as 'yes' | 'maybe' | 'no';
+        const userMember = allMembers.find(m => m.gmail === userEmail);
+        if (userMember) {
+          const userAtt = attendeesList.find(a => a.memberId === userMember.member_id);
+          if (userAtt) {
+            userStatus = userAtt.status;
+          }
         }
       }
 

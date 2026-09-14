@@ -12,8 +12,6 @@ export default function TermineClient({ initialEvents }: TermineClientProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTimeRange, setSelectedTimeRange] = useState("all");
   const [loadingEventId, setLoadingEventId] = useState<string | null>(null);
-  
-  // Jeder Termin bekommt einen eigenen Boolean-Status in diesem Objekt (z.B. { "event_id_1": true })
   const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
 
   const toggleDetails = (eventId: string) => {
@@ -35,7 +33,6 @@ export default function TermineClient({ initialEvents }: TermineClientProps) {
       if (res.ok) {
         const data = await res.json();
 
-        // Aktualisiere das Event im lokalen State direkt mit den neuen Werten von der API
         setEvents(prevEvents =>
           prevEvents.map(event => {
             if (event.id !== eventId) return event;
@@ -160,7 +157,7 @@ export default function TermineClient({ initialEvents }: TermineClientProps) {
             const style = getEventStyleByTitle(event.summary);
             const counts = event.attendanceCounts || { yes: 0, maybe: 0, no: 0 };
             const respondedTotal = counts.yes + counts.maybe + counts.no;
-            const totalMembers = 38;
+            const totalMembers = event.attendeesList?.length || 38;
 
             const yesPercent = (counts.yes / totalMembers) * 100;
             const maybePercent = (counts.maybe / totalMembers) * 100;
@@ -276,13 +273,13 @@ export default function TermineClient({ initialEvents }: TermineClientProps) {
                     </div>
                   </div>
 
-                  {/* DETAILS NACH REGISTERN */}
+                  {/* DETAILS NACH REGISTERN (ALLE MITGLIEDER) */}
                   {isExpanded && (
                     <div className="mt-3 pt-3 border-t border-slate-200 space-y-3 bg-slate-50 p-3.5 text-xs">
-                      <h5 className="font-bold text-slate-800 uppercase tracking-wider text-[10px]">Rückmeldungen nach Registern:</h5>
+                      <h5 className="font-bold text-slate-800 uppercase tracking-wider text-[10px]">Alle Mitglieder nach Registern:</h5>
                       
                       {attendees.length === 0 ? (
-                        <p className="text-slate-500 italic">Bisher liegen keine Rückmeldungen vor.</p>
+                        <p className="text-slate-500 italic">Keine Mitglieder gefunden.</p>
                       ) : (
                         <div className="space-y-2.5">
                           {[
@@ -305,17 +302,34 @@ export default function TermineClient({ initialEvents }: TermineClientProps) {
                                 <span className="font-bold text-slate-700 block text-[11px] border-b border-slate-200 pb-0.5">{registerName}:</span>
                                 <div className="flex flex-wrap gap-1.5 pt-1">
                                   {registerAttendees.map((attendee, idx) => {
-                                    let badgeColor = "bg-slate-200 text-slate-800 border-slate-300";
-                                    if (attendee.status === 'yes') badgeColor = "bg-emerald-100 text-emerald-800 border-emerald-200";
-                                    if (attendee.status === 'maybe') badgeColor = "bg-amber-100 text-amber-800 border-amber-200";
-                                    if (attendee.status === 'no') badgeColor = "bg-rose-100 text-rose-800 border-rose-200";
+                                    let badgeColor = "bg-slate-100 text-slate-500 border-slate-200 border-dashed";
+                                    let statusIcon = "⏳";
+
+                                    if (attendee.status === 'yes') {
+                                      badgeColor = "bg-emerald-50 text-emerald-800 border-emerald-200";
+                                      statusIcon = "✓";
+                                    } else if (attendee.status === 'maybe') {
+                                      badgeColor = "bg-amber-50 text-amber-800 border-amber-200";
+                                      statusIcon = "?";
+                                    } else if (attendee.status === 'no') {
+                                      badgeColor = "bg-rose-50 text-rose-800 border-rose-200";
+                                      statusIcon = "✕";
+                                    }
+
+                                    let formattedTime = "";
+                                    if (attendee.updatedAt && attendee.status) {
+                                      const d = new Date(attendee.updatedAt);
+                                      formattedTime = d.toLocaleDateString("de-DE", { day: "numeric", month: "short" }) + ", " + 
+                                                      d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+                                    }
 
                                     return (
-                                      <span key={idx} className={`px-2 py-1 rounded-sm border text-[10px] font-semibold flex items-center gap-1 ${badgeColor}`}>
-                                        <span>{attendee.vorname} {attendee.nachname}</span>
-                                        {attendee.status === 'yes' && <span className="text-emerald-700 font-bold">✓</span>}
-                                        {attendee.status === 'maybe' && <span className="text-amber-700 font-bold">?</span>}
-                                        {attendee.status === 'no' && <span className="text-rose-700 font-bold">✕</span>}
+                                      <span key={idx} className={`px-2 py-1 rounded-sm border text-[10px] font-semibold flex items-center justify-between gap-2 ${badgeColor}`}>
+                                        <span className="font-bold">{attendee.vorname} {attendee.nachname}</span>
+                                        <span className="flex items-center gap-1 text-[9px] opacity-80">
+                                          {formattedTime && <span className="font-normal text-slate-400">({formattedTime})</span>}
+                                          <span className="font-bold">{statusIcon}</span>
+                                        </span>
                                       </span>
                                     );
                                   })}

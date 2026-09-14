@@ -30,10 +30,6 @@ body {
   image-rendering: crisp-edges;
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @layer base {
   body {
     font-family: var(--font-glegoo), serif !important;
