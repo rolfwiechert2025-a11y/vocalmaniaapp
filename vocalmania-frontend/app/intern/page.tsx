@@ -78,6 +78,22 @@ export default async function InternDashboardPage() {
                 Probenpläne, Chorwochenenden und anstehende Auftritte im internen Kalender.
             </p>
             </Link>
+            <Link href="/intern/mitglieder" className="group block p-6 bg-slate-50 border border-slate-200 hover:border-indigo-600 transition-all space-y-2">
+            <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                Interne Mitglieder &rarr;
+            </h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+                Neuanlage, Bearbeiten und Lsöchen von internen Mitgliedern. Zugriff nur für Chorleitung und Registerleiter.
+            </p>
+            </Link>
+        <Link href="/intern/registers" className="group block p-6 bg-slate-50 border border-slate-200 hover:border-indigo-600 transition-all space-y-2">
+            <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                Interne Register &rarr;
+            </h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+                Neuanlage, Bearbeiten und Löschen von internen Register. Zugriff nur für Chorleitung und Registerleiter.
+            </p>
+            </Link>
         </div>
 
       </div>

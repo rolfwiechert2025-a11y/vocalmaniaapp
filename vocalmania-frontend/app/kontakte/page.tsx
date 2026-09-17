@@ -4,8 +4,8 @@ export default function KontaktPage() {
   return (
     <div className="space-y-0">
       
-      {/* 1. HERO-BEREICH (Volle Breite ohne Rahmen) */}
-      <div className="relative w-full h-72 md:h-96 bg-slate-900 -mx-6 md:-mx-10 -mt-6 md:-mt-10 mb-8 overflow-hidden">
+{/* 1. HERO-BEREICH (Erzwungene volle Bildschirmbreite) */}
+      <div className="relative w-[100vw] left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] h-72 md:h-96 bg-slate-900 -mt-6 md:-mt-10 mb-8 overflow-hidden">
         <Image 
           src="/DSC_9566-2-fertig.jpg" 
           alt="Vocalmania Chor" 
@@ -16,13 +16,15 @@ export default function KontaktPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
         
         {/* Überschrift im Bild */}
-        <div className="absolute bottom-6 left-6 md:left-10 z-10 text-white space-y-1">
-          <h1 className="text-3xl md:text-5xl font-black tracking-tight uppercase">
-            Kontakt
-          </h1>
-          <p className="text-xs md:text-sm font-bold text-indigo-400 tracking-[0.25em]">
-            Wir freuen uns auf Sie
-          </p>
+        <div className="absolute bottom-6 left-0 right-0 z-10">
+          <div className="max-w-5xl mx-auto px-6 md:px-10 space-y-1">
+            <h1 className="text-3xl md:text-5xl font-black tracking-tight uppercase text-white">
+              Kontakt
+            </h1>
+            <p className="text-xs md:text-sm font-bold text-indigo-400 tracking-[0.25em]">
+              Wir freuen uns auf Sie
+            </p>
+          </div>
         </div>
       </div>
 
