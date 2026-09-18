@@ -1,88 +1,124 @@
-import Image from "next/image";
+import Image from 'next/image';
+import { getPublicEvents } from '@/lib/events';
 
-export default function KontaktPage() {
+export default async function KonzertePage() {
+  const calendarEvents = await getPublicEvents();
+
   return (
-    <div className="space-y-0">
+    <div className="space-y-6">
       
-{/* 1. HERO-BEREICH (Erzwungene volle Bildschirmbreite) */}
-      <div className="relative w-[100vw] left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] h-72 md:h-96 bg-slate-900 -mt-6 md:-mt-10 mb-8 overflow-hidden">
+      {/* 1. HERO-BEREICH */}
+      <div className="relative w-full h-64 md:h-80 rounded-3xl overflow-hidden shadow-2xl border border-white/10 mb-8">
         <Image 
           src="/DSC_9566-2-fertig.jpg" 
           alt="Vocalmania Chor" 
           fill 
-          className="object-cover"
+          className="object-cover opacity-80"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
         
-        {/* Überschrift im Bild */}
-        <div className="absolute bottom-6 left-0 right-0 z-10">
-          <div className="max-w-5xl mx-auto px-6 md:px-10 space-y-1">
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight uppercase text-white">
-              Kontakt
+        <div className="absolute bottom-6 left-0 right-0 z-10 px-6 md:px-8">
+          <div className="space-y-1">
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">
+              Anstehende Konzerte
             </h1>
-            <p className="text-xs md:text-sm font-bold text-indigo-400 tracking-[0.25em]">
-              Wir freuen uns auf Sie
+            <p className="text-xs md:text-sm font-semibold text-indigo-300 tracking-[0.2em] uppercase">
+              Erlebe Vocalmania live
             </p>
           </div>
         </div>
       </div>
 
-      {/* 2. DURCHGEHENDER WEISSER INHALTSBEREICH (Ohne abgerundete Ecken) */}
-      <div className="bg-white -mx-6 md:-mx-10 px-6 md:px-10 py-8 space-y-10 border-b border-slate-200">
-        
-        {/* Sektion 1: Anschrift & Adresse */}
-        <div className="space-y-4">
-          <div className="border-b border-slate-200 pb-3">
-            <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide">Postanschrift</h2>
-            <p className="text-sm text-slate-500 mt-0.5">Hier erreichen Sie uns postalisch</p>
-          </div>
-          
-          <div className="text-sm text-slate-700 space-y-1 font-medium">
-            <p className="font-bold text-slate-900">Vocalmania – Singing and more</p>
-            <p>Heideweg 2</p>
-            <p>72160 Horb-Isenburg</p>
-          </div>
+      {/* 2. KONZERTE-LISTE IM NEUEN GLAS-DESIGN */}
+      {calendarEvents.length === 0 ? (
+        <div className="bg-black/30 backdrop-blur-md p-8 rounded-3xl border border-white/10 text-center text-indigo-200/70 text-sm">
+          Aktuell sind keine öffentlichen Termine im Kalender hinterlegt.
         </div>
+      ) : (
+        <div className="grid gap-6">
+          {calendarEvents.map((event, index) => {
+            const startDate = new Date(event.start?.dateTime || event.start?.date || "");
+            const formattedDate = !isNaN(startDate.getTime()) 
+              ? startDate.toLocaleDateString("de-DE", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+              : "Datum auf Anfrage";
 
-        {/* Sektion 2: Direktkontakt */}
-        <div className="space-y-4 pt-6 border-t border-slate-100">
-          <div className="border-b border-slate-200 pb-3">
-            <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide">Direkter Draht</h2>
-            <p className="text-sm text-slate-500 mt-0.5">Rufen Sie uns an oder schreiben Sie uns</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-5 bg-slate-50 border border-slate-100 space-y-2">
-              <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Telefon</p>
-              <a href="tel:+4915752429035" className="text-base font-bold text-slate-900 hover:text-indigo-600 transition-colors block">
-                +49 1575 2429035
-              </a>
-            </div>
+            const mapsUrl = event.resolvedLocation 
+              ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.resolvedLocation)}` 
+              : null;
 
-            <div className="p-5 bg-slate-50 border border-slate-100 space-y-2">
-              <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider">E-Mail</p>
-              <a href="mailto:info@vocalmania-isenburg.com" className="text-base font-bold text-slate-900 hover:text-indigo-600 transition-colors block break-all">
-                info@vocalmania-isenburg.com
-              </a>
-            </div>
-          </div>
+            return (
+              <div key={event.id || index} className="bg-gradient-to-br from-black/30 via-black/40 to-black/60 backdrop-blur-md p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl space-y-4">
+                <div>
+                  <span className="text-xs font-semibold text-indigo-300 uppercase tracking-wider">{formattedDate}</span>
+                  <h2 className="text-xl font-bold text-white mt-1">{event.summary || "Kein Titel"}</h2>
+                  
+                  {event.resolvedLocation && (
+                    <p className="text-xs text-indigo-200/80 mt-1.5 flex items-center gap-1.5">
+                      <span>📍</span> 
+                      {mapsUrl ? (
+                        <a 
+                          href={mapsUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="text-indigo-300 hover:underline hover:text-white transition-colors"
+                        >
+                          {event.resolvedLocation}
+                        </a>
+                      ) : (
+                        event.resolvedLocation
+                      )}
+                    </p>
+                  )}
+                </div>
+
+                {/* Kurzbeschreibung */}
+                {event.resolvedShortDesc && (
+                  <p className="text-xs sm:text-sm text-indigo-200/90 leading-relaxed whitespace-pre-line">{event.resolvedShortDesc}</p>
+                )}
+
+                {/* Google Drive Bild */}
+                {event.imageUrl && (
+                  <div className="relative w-full h-56 md:h-72 rounded-2xl overflow-hidden bg-black/40 border border-white/10">
+                    <img 
+                      src={event.imageUrl} 
+                      alt={event.summary || "Konzert Plakat"} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+
+                {/* Ticket-Link Button */}
+                {event.ticketUrl && (
+                  <div>
+                    <a 
+                      href={event.ticketUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-full shadow-md transition-colors"
+                    >
+                      🎟️ Tickets sichern
+                    </a>
+                  </div>
+                )}
+
+                {/* Langbeschreibung als Aufklapp-Menü */}
+                {event.resolvedLongDesc && (
+                  <details className="group border-t border-white/10 pt-3">
+                    <summary className="text-xs font-semibold text-indigo-300 cursor-pointer list-none flex items-center justify-between">
+                      <span>Mehr Details & Infos anzeigen</span>
+                      <span className="group-open:rotate-180 transition-transform">▼</span>
+                    </summary>
+                    <div className="mt-2 text-xs text-indigo-200/70 space-y-1 whitespace-pre-line">
+                      {String(event.resolvedLongDesc)}
+                    </div>
+                  </details>
+                )}
+              </div>
+            );
+          })}
         </div>
-
-        {/* Sektion 3: Social Media */}
-        <div className="space-y-4 pt-6 border-t border-slate-100">
-          <div className="border-b border-slate-200 pb-3">
-            <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide">Social Media</h2>
-            <p className="text-sm text-slate-500 mt-0.5">Folgen Sie uns auf unseren Kanälen</p>
-          </div>
-          
-          <p className="text-sm text-slate-700">
-            Besuchen Sie uns auch auf Facebook, Instagram, YouTube und TikTok, um keine Neuigkeiten oder Auftritte zu verpassen. Die direkten Links finden Sie jederzeit in unserem Menü oder auf der Startseite.
-          </p>
-        </div>
-
-      </div>
-
+      )}
     </div>
   );
 }

@@ -90,7 +90,7 @@ export default function RegistersClient({ initialRegisters }: RegistersClientPro
       } else {
         setErrorMessage(`Server-Fehler: ${data.error || "Unbekannter Fehler"}`);
       }
-    } catch (err) {
+    } catch {
       setErrorMessage("Netzwerkfehler beim Speichern.");
     } finally {
       setLoading(false);
@@ -113,7 +113,7 @@ export default function RegistersClient({ initialRegisters }: RegistersClientPro
       } else {
         alert(data.error || "Fehler beim Löschen.");
       }
-    } catch (err) {
+    } catch {
       alert("Netzwerkfehler beim Löschen.");
     }
   };
@@ -123,113 +123,112 @@ export default function RegistersClient({ initialRegisters }: RegistersClientPro
   );
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto py-6 px-4">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 border border-slate-200 shadow-xs">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Stimmregister-Verwaltung</h1>
-          <p className="text-xs text-slate-500">Übersicht aller Chorregister (Sopran, Alt, Tenor, Bass etc.).</p>
+    <div className="space-y-6">
+      
+      {/* SUCHLEISTE & NEU-BUTTON */}
+      <div className="p-4 bg-black/30 backdrop-blur-md rounded-3xl border border-white/10 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-xl">
+        <div className="w-full sm:w-80">
+          <input
+            type="text"
+            placeholder="🔍 Register suchen..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-2 bg-black/40 border border-white/15 rounded-full text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all shadow-inner"
+          />
         </div>
+
         <button
           onClick={openCreateModal}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-xs font-bold transition-colors cursor-pointer shadow-sm"
+          className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer shadow-lg border border-indigo-400/30 whitespace-nowrap"
         >
           + Neues Register anlegen
         </button>
       </div>
 
-      <div className="w-full sm:w-80">
-        <input
-          type="text"
-          placeholder="🔍 Register suchen..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-3.5 py-2 bg-white border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
-        />
-      </div>
-
-      <div className="bg-white border border-slate-200 shadow-xs overflow-hidden">
+      {/* REGISTER LISTE (IM GLAS-LOOK) */}
+      <div className="bg-black/30 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden divide-y divide-white/10">
         {filteredRegisters.length === 0 ? (
-          <p className="p-5 text-xs text-slate-400 italic">Keine Register gefunden.</p>
+          <p className="p-6 text-xs text-indigo-200/60 italic text-center">Keine Register gefunden.</p>
         ) : (
-          <div className="divide-y divide-slate-100">
-            {filteredRegisters.map(reg => (
-              <div key={reg.id} className="p-4 flex items-center justify-between hover:bg-slate-50/80 transition-colors">
-                <div className="space-y-1">
-                  <h4 className="font-bold text-slate-900 text-sm">{reg.description_short}</h4>
-                  {reg.description_long && (
-                    <p className="text-xs text-slate-500">{reg.description_long}</p>
-                  )}
-                  <p className="text-[10px] text-slate-400 font-mono">ID: {reg.id}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => openEditModal(reg)}
-                    className="text-indigo-600 hover:text-indigo-800 text-xs font-semibold px-3 py-1.5 bg-white border border-slate-200 cursor-pointer shadow-xs"
-                  >
-                    Bearbeiten
-                  </button>
-                  <button
-                    onClick={() => handleDelete(reg.id)}
-                    className="text-rose-600 hover:text-rose-800 text-xs font-semibold px-3 py-1.5 bg-white border border-slate-200 cursor-pointer shadow-xs"
-                  >
-                    Löschen
-                  </button>
-                </div>
+          filteredRegisters.map(reg => (
+            <div key={reg.id} className="p-4 sm:p-5 flex items-center justify-between hover:bg-white/5 transition-colors group">
+              <div className="space-y-1">
+                <h4 className="font-bold text-white text-sm group-hover:text-indigo-300 transition-colors">{reg.description_short}</h4>
+                {reg.description_long && (
+                  <p className="text-xs text-indigo-200/70">{reg.description_long}</p>
+                )}
+                <p className="text-[10px] text-indigo-300/40 font-mono">ID: {reg.id}</p>
               </div>
-            ))}
-          </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => openEditModal(reg)}
+                  className="text-indigo-300 hover:text-white text-xs font-semibold px-3.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl cursor-pointer transition-colors shadow-sm"
+                >
+                  Bearbeiten
+                </button>
+                <button
+                  onClick={() => handleDelete(reg.id)}
+                  className="text-rose-300 hover:text-white text-xs font-semibold px-3.5 py-1.5 bg-rose-500/20 hover:bg-rose-500/40 border border-rose-500/30 rounded-xl cursor-pointer transition-colors shadow-sm"
+                >
+                  Löschen
+                </button>
+              </div>
+            </div>
+          ))
         )}
       </div>
 
+      {/* MODAL (ERSTELLEN / BEARBEITEN) */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md p-6 border border-slate-200 shadow-xl space-y-4">
-            <h3 className="font-bold text-base text-slate-900">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#1e1b4b] w-full max-w-md p-6 sm:p-8 border border-white/15 rounded-3xl shadow-2xl space-y-5 text-white">
+            <h3 className="font-bold text-lg text-white">
               {editingRegisterId ? "Register bearbeiten" : "Neues Register anlegen"}
             </h3>
 
             {errorMessage && (
-              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+              <div className="p-3 bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-medium rounded-xl">
                 {errorMessage}
               </div>
             )}
 
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Kurzbeschreibung (z.B. Sopran 1) *</label>
+                <label className="block text-xs font-bold text-indigo-200/80 mb-1">Kurzbeschreibung (z.B. Sopran 1) *</label>
                 <input
                   type="text"
                   name="description_short"
                   required
                   value={form.description_short}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+                  className="w-full px-4 py-2 bg-black/40 border border-white/15 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Langbeschreibung (optional)</label>
+                <label className="block text-xs font-bold text-indigo-200/80 mb-1">Langbeschreibung (optional)</label>
                 <input
                   type="text"
                   name="description_long"
                   value={form.description_long}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+                  className="w-full px-4 py-2 bg-black/40 border border-white/15 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  className="px-4 py-2 text-xs font-bold text-indigo-200 hover:text-white transition-colors cursor-pointer"
                 >
                   Abbrechen
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors cursor-pointer"
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-lg border border-indigo-400/30"
                 >
                   {loading ? "Wird gespeichert..." : "Speichern"}
                 </button>

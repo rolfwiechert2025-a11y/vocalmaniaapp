@@ -1,141 +1,148 @@
-import Image from "next/image";
+import Link from "next/link";
 import { google } from "googleapis";
 import { getGoogleAuth } from "@/lib/googleauth";
 
 interface AlbumItem {
+  id: string;
   titel: string;
   link: string;
   vorschaubild: string | null;
   beschreibung: string;
+  bildAnzahl: number;
 }
 
-// Funktion zum Auslesen des Album-Google-Docs
-async function fetchAlbumsFromDoc(fileId: string): Promise<AlbumItem[]> {
-  if (!fileId) return [];
+// Funktion zum Auslesen der Alben direkt aus der Google Drive Ordnerstruktur
+async function fetchAlbumsFromDrive(): Promise<AlbumItem[]> {
+  const rootFolderId = process.env.PUBLIC_PICTURES_ROOT_ID;
+  if (!rootFolderId) {
+    console.error("PUBLIC_PICTURES_ROOT_ID ist nicht in der .env definiert.");
+    return [];
+  }
 
   try {
     const auth = getGoogleAuth();
     const drive = google.drive({ version: 'v3', auth });
-    
-    const response = await drive.files.export({
-      fileId: fileId,
-      mimeType: 'text/plain',
+
+    // 1. Alle Unterordner (Alben) im Root-Ordner abrufen
+    const foldersRes = await drive.files.list({
+      q: `'${rootFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+      fields: 'files(id, name, description, webViewLink)',
+      orderBy: 'name desc',
     });
 
-    const rawText = typeof response.data === 'string' ? response.data : '';
-    
-    // Alben anhand des Tags [Album] auftrennen
-    const blocks = rawText.split(/(?=\[Album\])/i).filter(b => b.includes('[Album]'));
+    const subFolders = foldersRes.data.files || [];
 
-    return blocks.map(block => {
-      const getField = (field: string) => {
-        const regex = new RegExp(`${field}:\\s*(.*)`, 'i');
-        const match = block.match(regex);
-        return match ? match[1].trim() : '';
-      };
+    // 2. Für jeden Unterordner die Bilder und Details parallel abrufen
+    const albumPromises = subFolders.map(async (folder): Promise<AlbumItem | null> => {
+      if (!folder.id || !folder.name) return null;
 
-      const rawImage = getField('Vorschaubild');
+      // Bilder im Ordner suchen
+      const filesRes = await drive.files.list({
+        q: `'${folder.id}' in parents and (mimeType = 'image/jpeg' or mimeType = 'image/png' or mimeType = 'image/webp') and trashed = false`,
+        fields: 'files(id, name)',
+        orderBy: 'name',
+        pageSize: 10,
+      });
+
+      const images = filesRes.data.files || [];
+      
       let vorschaubild: string | null = null;
-      const fileIdMatch = rawImage.match(/(?:\/file\/d\/|\/open\?id=|\/document\/d\/|\/d\/|d\/)([a-zA-Z0-9_-]{25,})/);
-      if (fileIdMatch && fileIdMatch[1]) {
-        vorschaubild = `https://lh3.googleusercontent.com/d/${fileIdMatch[1]}`;
-      } else if (rawImage.startsWith('http')) {
-        vorschaubild = rawImage;
+      if (images.length > 0 && images[0].id) {
+        vorschaubild = `/api/images/${images[0].id}`;
       }
 
       return {
-        titel: getField('Titel') || 'Unbenanntes Album',
-        link: getField('Link') || '#',
+        id: folder.id,
+        titel: folder.name,
+        link: `/bilder/${folder.id}`,
         vorschaubild,
-        beschreibung: getField('Beschreibung'),
+        beschreibung: folder.description || `Fotoalbum mit ${images.length} Bildern`,
+        bildAnzahl: images.length,
       };
     });
+
+    const results = await Promise.all(albumPromises);
+
+    // Filtert null-Werte heraus und garantiert TypeScript den Typ AlbumItem[]
+    return results.filter((album): album is AlbumItem => album !== null);
+
   } catch (error) {
-    console.error(`Fehler beim Laden des Album-Docs (${fileId}):`, error);
+    console.error("Fehler beim Laden der Alben aus Google Drive:", error);
     return [];
   }
 }
 
 export default async function BilderPage() {
-  // Lädt die Alben aus dem Google Doc, dessen ID in .env.local als PUBLIC_ALBUMS_DOC_ID hinterlegt ist
-  const albums = await fetchAlbumsFromDoc(process.env.PUBLIC_ALBUMS_DOC_ID || "");
+  const albums = await fetchAlbumsFromDrive();
 
   return (
-    <div className="space-y-0">
+    <div className="space-y-6">
       
-{/* 1. HERO-BEREICH (Erzwungene volle Bildschirmbreite) */}
-      <div className="relative w-[100vw] left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] h-72 md:h-96 bg-slate-900 -mt-6 md:-mt-10 mb-8 overflow-hidden">
-        <Image 
-          src="/DSC_9566-2-fertig.jpg" 
-          alt="Vocalmania Chor" 
-          fill 
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
-        
-        {/* Überschrift im Bild */}
-        <div className="absolute bottom-6 left-0 right-0 z-10">
-          <div className="max-w-5xl mx-auto px-6 md:px-10 space-y-1">
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight uppercase text-white">
-              Bildergalerie
-            </h1>
-            <p className="text-xs md:text-sm font-bold text-indigo-400 tracking-[0.25em]">
-              Eindrücke & Momente
-            </p>
-          </div>
+      {/* SEITEN-HEADER (Ohne großes Hero-Bild, im cleanen AppShell-Stil) */}
+      <div className="border-b border-white/10 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-black text-white">Bildergalerie</h1>
+          <p className="text-xs text-indigo-200/70 mt-0.5">Wähle ein Fotoalbum aus, um die Aufnahmen anzusehen</p>
         </div>
+        <span className="text-xs font-semibold bg-white/10 backdrop-blur-md text-white px-3 py-1 rounded-full border border-white/10">
+          {albums.length} {albums.length === 1 ? "Album" : "Alben"}
+        </span>
       </div>
 
-      {/* 2. DURCHGEHENDER WEISSER INHALTSBEREICH (Ohne abgerundete Ecken) */}
-      <div className="bg-white -mx-6 md:-mx-10 px-6 md:px-10 py-8 space-y-8 border-b border-slate-200">
-        
-        <div className="border-b border-slate-200 pb-3">
-          <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide">Unsere Fotoalben</h2>
-          <p className="text-sm text-slate-500 mt-0.5">Klicken Sie auf ein Album, um alle Bilder bei Google Photos anzusehen.</p>
+      {/* ALBUM-LISTE (Im einheitlichen Raster-Stil) */}
+      {albums.length === 0 ? (
+        <div className="bg-black/30 backdrop-blur-md p-8 rounded-3xl border border-white/10 text-center text-indigo-200/70 text-sm">
+          Aktuell sind keine Alben im Google Drive Verzeichnis hinterlegt.
         </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {albums.map((album) => (
+            <Link 
+              key={album.id} 
+              href={album.link} 
+              className="group bg-black/30 backdrop-blur-md p-5 rounded-3xl border border-white/10 shadow-xl space-y-3 hover:border-indigo-400 hover:bg-black/40 transition-all block"
+            >
+              <div>
+                <span className="text-xs font-semibold text-indigo-300 uppercase tracking-wider">
+                  {album.bildAnzahl} {album.bildAnzahl === 1 ? "Bild" : "Bilder"}
+                </span>
+                <h2 className="text-xl font-bold text-white mt-0.5 group-hover:text-indigo-300 transition-colors">
+                  {album.titel}
+                </h2>
+              </div>
 
-        {albums.length === 0 ? (
-          <p className="text-sm text-slate-500 py-6">Aktuell sind keine öffentlichen Alben hinterlegt.</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {albums.map((album, index) => (
-              <a 
-                key={index} 
-                href={album.link} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="group block bg-slate-50 border border-slate-200 overflow-hidden hover:border-indigo-600 transition-all shadow-sm"
-              >
-                {/* Vorschaubild des Albums */}
-                <div className="relative h-60 bg-slate-200 overflow-hidden">
-                  {album.vorschaubild ? (
-                    <img 
-                      src={album.vorschaubild} 
-                      alt={album.titel} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-slate-400 text-sm">Kein Vorschaubild</div>
-                  )}
-                </div>
+              {/* Beschreibung */}
+              {album.beschreibung && (
+                <p className="text-xs text-indigo-100/80 leading-relaxed line-clamp-2">
+                  {album.beschreibung}
+                </p>
+              )}
 
-                {/* Beschreibungs-Bereich */}
-                <div className="p-5 space-y-2">
-                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors flex items-center justify-between">
-                    <span>{album.titel}</span>
-                    <span className="text-indigo-600 text-sm">&rarr;</span>
-                  </h3>
-                  {album.beschreibung && (
-                    <p className="text-sm text-slate-600 leading-relaxed">{album.beschreibung}</p>
-                  )}
-                </div>
-              </a>
-            ))}
-          </div>
-        )}
+              {/* Vorschaubild */}
+              <div className="relative w-full h-56 md:h-72 rounded-2xl overflow-hidden bg-black/40 border border-white/10">
+                {album.vorschaubild ? (
+                  <img 
+                    src={album.vorschaubild} 
+                    alt={album.titel} 
+                    className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-indigo-200/50 text-xs">
+                    Kein Vorschaubild
+                  </div>
+                )}
+              </div>
 
-      </div>
+              {/* Action-Button */}
+              <div className="pt-1">
+                <span className="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 group-hover:bg-indigo-700 text-white text-xs font-bold rounded-full shadow-md transition-colors">
+                  📁 Album ansehen &rarr;
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
 
     </div>
   );

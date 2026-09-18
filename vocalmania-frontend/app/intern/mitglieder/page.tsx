@@ -29,5 +29,19 @@ export default async function MembersPage() {
     console.error("Fehler beim Laden der Mitglieder:", error);
   }
 
-  return <MembersClient initialMembers={members} registers={registers} />;
+  return (
+    <div className="space-y-6 max-w-4xl mx-auto">
+      
+      {/* SEITEN-HEADER */}
+      <div className="border-b border-white/10 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-black text-white">Chormitglieder-Verwaltung</h1>
+          <p className="text-xs text-indigo-200/70 mt-0.5">Übersicht aller aktiven Sängerinnen und Sänger nach Registern.</p>
+        </div>
+      </div>
+
+      <MembersClient initialMembers={members} registers={registers} />
+
+    </div>
+  );
 }
