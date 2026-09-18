@@ -1,6 +1,9 @@
 import { Pool } from "pg";
 import MembersClient from "./MembersClient";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
