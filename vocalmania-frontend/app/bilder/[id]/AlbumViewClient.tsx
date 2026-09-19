@@ -11,18 +11,24 @@ interface ImageItem {
 
 interface AlbumViewClientProps {
   albumTitle: string;
-  images: ImageItem[];
+  images?: ImageItem[];
+  backUrl?: string; // Neu: Flexibel für public (/bilder) oder intern (/intern/bilder)
 }
 
-export default function AlbumViewClient({ albumTitle, images }: AlbumViewClientProps) {
+export default function AlbumViewClient({ 
+  albumTitle, 
+  images = [], 
+  backUrl = "/bilder" 
+}: AlbumViewClientProps) {
   const [selectedImage, setSelectedImage] = useState<ImageItem | null>(null);
+  const safeImages = images || [];
 
   // Organische, überlappendungsfreie Kastenhöhen im Mosaik-Look
   const getCardStyle = (index: number) => {
     const pattern = index % 5;
     if (pattern === 0) return "h-80 sm:h-96"; // Highlight-Kachel
     if (pattern === 2) return "h-72";      // Mittleres Format
-    return "h-60";                          // Standard-Kachel
+    return "h-60";                         // Standard-Kachel
   };
 
   return (
@@ -31,7 +37,7 @@ export default function AlbumViewClient({ albumTitle, images }: AlbumViewClientP
         
         {/* Zurück-Navigation */}
         <div>
-          <Link href="/bilder" className="inline-flex items-center text-xs font-bold text-indigo-300 hover:text-white transition-colors">
+          <Link href={backUrl} className="inline-flex items-center text-xs font-bold text-indigo-300 hover:text-white transition-colors cursor-pointer">
             &larr; Zurück zur Album-Übersicht
           </Link>
         </div>
@@ -43,18 +49,18 @@ export default function AlbumViewClient({ albumTitle, images }: AlbumViewClientP
             <p className="text-xs text-indigo-200/70 mt-0.5">Klicke auf ein Bild, um es in der Großansicht zu öffnen</p>
           </div>
           <span className="text-xs font-semibold bg-white/10 backdrop-blur-md text-white px-3 py-1 rounded-full border border-white/10">
-            {images.length} {images.length === 1 ? "Bild" : "Bilder"}
+            {safeImages.length} {safeImages.length === 1 ? "Bild" : "Bilder"}
           </span>
         </div>
 
         {/* Mosaik-Grid */}
-        {images.length === 0 ? (
+        {safeImages.length === 0 ? (
           <div className="bg-black/20 backdrop-blur-md p-8 rounded-3xl border border-white/10 text-center text-indigo-200/70 text-sm">
             In diesem Album befinden sich aktuell keine Bilder.
           </div>
         ) : (
           <div className="columns-1 sm:columns-2 md:columns-3 gap-4 [column-fill:_balance]">
-            {images.map((img, index) => {
+            {safeImages.map((img, index) => {
               const heightClass = getCardStyle(index);
               return (
                 <div 
@@ -89,14 +95,15 @@ export default function AlbumViewClient({ albumTitle, images }: AlbumViewClientP
               className="relative max-w-4xl w-full flex flex-col items-center justify-center space-y-3 my-auto pt-16 sm:pt-12"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Großbild-Container mit absolut platzierten Buttons sicher in der oberen rechten Ecke */}
+              {/* Großbild-Container mit absolut platzierten Buttons */}
               <div className="relative w-full h-[65vh] bg-slate-950 rounded-3xl overflow-hidden shadow-2xl border border-white/10 flex items-center justify-center p-2">
                 
-                {/* Die runden Buttons direkt im Bildcontainer oben rechts platziert */}
+                {/* Die runden Buttons oben rechts */}
                 <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
                   <a
                     href={selectedImage.imageUrl}
                     download={selectedImage.name || "vocalmania-foto.jpg"}
+                    onClick={(e) => e.stopPropagation()}
                     className="w-11 h-11 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-xl transition-transform hover:scale-105 cursor-pointer text-base"
                     title="Bild herunterladen"
                   >

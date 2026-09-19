@@ -1,49 +1,35 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import Image from "next/image";
 
 export default function LoginPage() {
   return (
-    <div className="space-y-0">
+    <div className="max-w-md mx-auto pt-8 pb-12">
       
-      {/* 1. HERO-BEREICH */}
-      <div className="relative w-full h-72 md:h-96 bg-slate-900 -mx-6 md:-mx-10 -mt-6 md:-mt-10 mb-8 overflow-hidden">
-        v<Image 
-          src="/DSC_9566-2-fertig.jpg" 
-          alt="Vocalmania Chor" 
-          fill 
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+      {/* GLAS-CONTAINER FÜR DEN LOGIN */}
+      <div className="bg-black/30 backdrop-blur-2xl border border-white/15 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-6 text-center">
         
-        <div className="absolute bottom-6 left-6 md:left-10 z-10 text-white space-y-1">
-          <h1 className="text-3xl md:text-5xl font-black tracking-tight uppercase">
-            Interner Bereich
-          </h1>
-          <p className="text-xs md:text-sm font-bold text-indigo-400 tracking-[0.25em]">
-            Mitglieder-Login
-          </p>
-        </div>
-      </div>
-
-      {/* 2. DURCHGEHENDER WEISSER INHALTSBEREICH   */}
-      <div className="bg-white -mx-6 md:-mx-10 px-6 md:px-10 py-12 border-b border-slate-200 max-w-xl mx-auto text-center space-y-6">
-        
+        {/* SEITEN-TITEL */}
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-slate-900">Anmeldung für Chormitglieder</h2>
-          <p className="text-sm text-slate-600 leading-relaxed">
-            Bitte melde dich mit deinem Google-Konto an, um Zugriff auf den internen Bereich (interne Alben, Probenmaterial und Dokumente) zu erhalten.
+          <div className="w-12 h-12 mx-auto rounded-2xl bg-indigo-600/30 border border-indigo-400/30 flex items-center justify-center text-xl shadow-inner mb-4">
+            🔐
+          </div>
+          <h1 className="text-2xl font-black text-white tracking-tight">
+            Mitglieder-Login
+          </h1>
+          <p className="text-xs text-indigo-200/70 leading-relaxed max-w-sm mx-auto">
+            Bitte melde dich mit deinem Google-Konto an, um Zugriff auf den internen Bereich zu erhalten.
           </p>
         </div>
 
-        <div>
+        {/* LOGIN-BUTTON */}
+        <div className="pt-2">
           <button
             onClick={() => signIn("google", { callbackUrl: "/intern" })}
-            className="inline-flex items-center justify-center gap-3 w-full sm:w-auto px-6 py-3 bg-slate-900 hover:bg-indigo-600 text-white text-sm font-bold uppercase tracking-wider transition-colors shadow-sm"
+            className="w-full py-3.5 px-6 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold tracking-wider uppercase rounded-2xl transition-all shadow-lg border border-indigo-400/30 cursor-pointer flex items-center justify-center gap-3 group"
           >
-            <span>🔐 Mit Google anmelden</span>
+            <span className="text-base group-hover:scale-110 transition-transform">🔐</span>
+            <span>Mit Google anmelden</span>
           </button>
         </div>
 
