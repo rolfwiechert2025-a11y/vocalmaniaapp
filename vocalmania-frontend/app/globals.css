@@ -34,4 +34,12 @@ body {
   body {
     font-family: var(--font-glegoo), serif !important;
   }
+
+  /* Edge-to-Edge Anpassungen für den Vollbild-Effekt (wie Revolut) */
+  html, body {
+    height: 100%;
+    overscroll-behavior-y: none;
+    /* Verhindert unerwünschte weiße Ränder im Vollbild-/PWA-Modus auf Mobilgeräten */
+    background-color: #0b0a1f !important; 
+  }
 }
