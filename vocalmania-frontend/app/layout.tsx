@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import AppShell from "@/components/AppShell";
 import { Providers } from "@/components/Providers";
 import "./globals.css";
@@ -8,6 +8,11 @@ export const metadata: Metadata = {
   description: "A-cappella-Ensemble",
 };
 
+export const viewport: Viewport = {
+  themeColor: "#0b0a1f", // Passt sich nahtlos an deinen dunklen Hintergrund an
+  viewportFit: "cover",  // Ermöglicht das Zeichnen bis hinter die Statusleiste (Edge-to-Edge)
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -15,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="de">
-      <body className="bg-slate-950 text-white antialiased selection:bg-indigo-500 selection:text-white">
+      <body className="bg-slate-950 text-white antialiased selection:bg-indigo-500 selection:text-white pt-[env(safe-area-inset-top)]">
         <Providers>
           <AppShell>
             {children}
