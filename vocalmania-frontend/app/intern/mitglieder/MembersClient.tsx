@@ -272,13 +272,23 @@ export default function MembersClient({ initialMembers, registers }: MembersClie
         })}
       </div>
 
-      {/* MODAL (ERSTELLEN / BEARBEITEN) */}
+      {/* MODAL (ERSTELLEN / BEARBEITEN) - Ohne doppelte Scrollbar */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#1e1b4b] w-full max-w-lg p-6 sm:p-8 border border-white/15 rounded-3xl shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto text-white">
-            <h3 className="font-bold text-lg text-white">
-              {editingMemberId ? "Mitglied bearbeiten" : "Neues Mitglied anlegen"}
-            </h3>
+        <div className="fixed inset-0 z-[999999] bg-black/80 backdrop-blur-md flex items-start justify-center pt-24 sm:pt-28 pb-12 px-4 overflow-hidden">
+          <div className="bg-[#1e1b4b] w-full max-w-lg p-6 sm:p-8 border border-white/15 rounded-3xl shadow-2xl space-y-5 max-h-[80vh] overflow-y-auto text-white">
+            
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+              <h3 className="font-bold text-lg text-white">
+                {editingMemberId ? "Mitglied bearbeiten" : "Neues Mitglied anlegen"}
+              </h3>
+              <button 
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="text-white/60 hover:text-white text-sm font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
 
             {errorMessage && (
               <div className="p-3 bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-medium rounded-xl">
@@ -412,7 +422,7 @@ export default function MembersClient({ initialMembers, registers }: MembersClie
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10 sticky bottom-0 bg-[#1e1b4b] pb-2">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
