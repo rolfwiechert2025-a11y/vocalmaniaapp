@@ -1,124 +1,121 @@
-import Image from 'next/image';
-import { getPublicEvents } from '@/lib/events';
-
-export default async function KonzertePage() {
-  const calendarEvents = await getPublicEvents();
-
+export default function KontaktPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-4xl mx-auto pb-16">
       
-      {/* 1. HERO-BEREICH */}
-      <div className="relative w-full h-64 md:h-80 rounded-3xl overflow-hidden shadow-2xl border border-white/10 mb-8">
-        <Image 
-          src="/DSC_9566-2-fertig.jpg" 
-          alt="Vocalmania Chor" 
-          fill 
-          className="object-cover opacity-80"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
-        
-        <div className="absolute bottom-6 left-0 right-0 z-10 px-6 md:px-8">
-          <div className="space-y-1">
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">
-              Anstehende Konzerte
-            </h1>
-            <p className="text-xs md:text-sm font-semibold text-indigo-300 tracking-[0.2em] uppercase">
-              Erlebe Vocalmania live
-            </p>
-          </div>
+      {/* SEITEN-HEADER */}
+      <div className="border-b border-white/10 pb-4 space-y-1">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-400/30">
+            Kontakt
+          </span>
         </div>
+        <h1 className="text-2xl md:text-4xl font-black text-white">Wir sind für Sie da</h1>
+        <p className="text-xs text-indigo-200/70">
+          Haben Sie Fragen zu unseren Konzerten, möchten Sie uns buchen oder selbst im Chor mitsingen? Nehmen Sie Kontakt mit uns auf.
+        </p>
       </div>
 
-      {/* 2. KONZERTE-LISTE IM NEUEN GLAS-DESIGN */}
-      {calendarEvents.length === 0 ? (
-        <div className="bg-black/30 backdrop-blur-md p-8 rounded-3xl border border-white/10 text-center text-indigo-200/70 text-sm">
-          Aktuell sind keine öffentlichen Termine im Kalender hinterlegt.
-        </div>
-      ) : (
-        <div className="grid gap-6">
-          {calendarEvents.map((event, index) => {
-            const startDate = new Date(event.start?.dateTime || event.start?.date || "");
-            const formattedDate = !isNaN(startDate.getTime()) 
-              ? startDate.toLocaleDateString("de-DE", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-              : "Datum auf Anfrage";
-
-            const mapsUrl = event.resolvedLocation 
-              ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.resolvedLocation)}` 
-              : null;
-
-            return (
-              <div key={event.id || index} className="bg-gradient-to-br from-black/30 via-black/40 to-black/60 backdrop-blur-md p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl space-y-4">
-                <div>
-                  <span className="text-xs font-semibold text-indigo-300 uppercase tracking-wider">{formattedDate}</span>
-                  <h2 className="text-xl font-bold text-white mt-1">{event.summary || "Kein Titel"}</h2>
-                  
-                  {event.resolvedLocation && (
-                    <p className="text-xs text-indigo-200/80 mt-1.5 flex items-center gap-1.5">
-                      <span>📍</span> 
-                      {mapsUrl ? (
-                        <a 
-                          href={mapsUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="text-indigo-300 hover:underline hover:text-white transition-colors"
-                        >
-                          {event.resolvedLocation}
-                        </a>
-                      ) : (
-                        event.resolvedLocation
-                      )}
-                    </p>
-                  )}
-                </div>
-
-                {/* Kurzbeschreibung */}
-                {event.resolvedShortDesc && (
-                  <p className="text-xs sm:text-sm text-indigo-200/90 leading-relaxed whitespace-pre-line">{event.resolvedShortDesc}</p>
-                )}
-
-                {/* Google Drive Bild */}
-                {event.imageUrl && (
-                  <div className="relative w-full h-56 md:h-72 rounded-2xl overflow-hidden bg-black/40 border border-white/10">
-                    <img 
-                      src={event.imageUrl} 
-                      alt={event.summary || "Konzert Plakat"} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-
-                {/* Ticket-Link Button */}
-                {event.ticketUrl && (
-                  <div>
-                    <a 
-                      href={event.ticketUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-full shadow-md transition-colors"
-                    >
-                      🎟️ Tickets sichern
-                    </a>
-                  </div>
-                )}
-
-                {/* Langbeschreibung als Aufklapp-Menü */}
-                {event.resolvedLongDesc && (
-                  <details className="group border-t border-white/10 pt-3">
-                    <summary className="text-xs font-semibold text-indigo-300 cursor-pointer list-none flex items-center justify-between">
-                      <span>Mehr Details & Infos anzeigen</span>
-                      <span className="group-open:rotate-180 transition-transform">▼</span>
-                    </summary>
-                    <div className="mt-2 text-xs text-indigo-200/70 space-y-1 whitespace-pre-line">
-                      {String(event.resolvedLongDesc)}
-                    </div>
-                  </details>
-                )}
+      {/* KONTAKT-KACHELN RASTER */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        {/* NEU: Allgemeine Kontaktdaten & Adresse */}
+        <div className="bg-black/30 backdrop-blur-md p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl space-y-4 hover:border-indigo-400/50 transition-all md:col-span-2">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-600/30 border border-indigo-400/30 flex items-center justify-center text-xl shadow-inner">
+            📍
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold text-white">Vocalmania singing and more</h2>
+            <p className="text-xs text-indigo-200/70">Offizielle Kontaktdaten & Probenort</p>
+          </div>
+          <div className="pt-3 text-sm text-indigo-100/90 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-white/10">
+            <div className="space-y-1.5 text-xs text-indigo-200/80">
+              <p className="font-semibold text-white text-sm">Kirchengemeinde Nordstetten</p>
+              <p>Hohlgasse 2/1</p>
+              <p>72160 Horb-Nordstetten</p>
+            </div>
+            <div className="space-y-2 flex flex-col justify-start">
+              <div>
+                <span className="text-[10px] text-indigo-300 uppercase tracking-wider block font-semibold">Mobil</span>
+                <a href="tel:+4915752429035" className="text-xs font-bold text-white hover:text-indigo-300 transition-colors">
+                  +49 1575 2429035
+                </a>
               </div>
-            );
-          })}
+              <div>
+                <span className="text-[10px] text-indigo-300 uppercase tracking-wider block font-semibold">E-Mail</span>
+                <a href="mailto:info@vocalmaniasingingandmore.de" className="text-xs font-bold text-indigo-300 hover:text-white transition-colors underline break-all">
+                  info@vocalmaniasingingandmore.de
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* Chorleitung / Dirigat */}
+        <div className="bg-black/30 backdrop-blur-md p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl space-y-4 hover:border-indigo-400/50 transition-all">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-600/30 border border-indigo-400/30 flex items-center justify-center text-xl shadow-inner">
+            🎼
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold text-white">Chorleitung & Dirigat</h2>
+            <p className="text-xs text-indigo-200/70">Musikalische Leitung & Arrangements</p>
+          </div>
+          <div className="pt-2 text-sm text-indigo-100/90 space-y-2 border-t border-white/10">
+            <p className="font-semibold text-white">Vocalmania A-cappella-Ensemble</p>
+            <p className="text-xs text-indigo-200/80 leading-relaxed">
+              Für musikalische Anfragen, Probenarbeit und Repertoire-Fragen.
+            </p>
+            <div className="pt-2">
+              <a 
+                href="mailto:info@vocalmaniasingingandmore.de" 
+                className="inline-flex items-center gap-2 text-xs font-bold text-indigo-300 hover:text-white bg-indigo-600/40 hover:bg-indigo-600 px-4 py-2 rounded-full border border-indigo-400/30 transition-all shadow-md"
+              >
+                ✉️ E-Mail an die Chorleitung senden
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Vorstand / Organisation */}
+        <div className="bg-black/30 backdrop-blur-md p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl space-y-4 hover:border-indigo-400/50 transition-all">
+          <div className="w-12 h-12 rounded-2xl bg-violet-600/30 border border-violet-400/30 flex items-center justify-center text-xl shadow-inner">
+            🏛️
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold text-white">Vorstand & Organisation</h2>
+            <p className="text-xs text-indigo-200/70">Veranstaltungen, Presse & Booking</p>
+          </div>
+          <div className="pt-2 text-sm text-indigo-100/90 space-y-2 border-t border-white/10">
+            <p className="font-semibold text-white">Vocalmania e.V.</p>
+            <p className="text-xs text-indigo-200/80 leading-relaxed">
+              Für Konzertanfragen, Veranstalter und organisatorische Anliegen.
+            </p>
+            <div className="pt-2">
+              <a 
+                href="mailto:info@vocalmaniasingingandmore.de" 
+                className="inline-flex items-center gap-2 text-xs font-bold text-white bg-violet-600/40 hover:bg-violet-600 px-4 py-2 rounded-full border border-violet-400/30 transition-all shadow-md"
+              >
+                ✉️ E-Mail an den Vorstand senden
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* MITMACHEN / PROBEN-HINWEIS */}
+      <div className="bg-gradient-to-br from-indigo-950/60 via-black/50 to-black/70 backdrop-blur-md p-8 rounded-3xl border border-white/10 shadow-xl space-y-4">
+        <div className="flex items-center gap-3">
+          <span className="text-3xl">🎤</span>
+          <div>
+            <h3 className="text-lg font-bold text-white">Interesse am Mitsingen?</h3>
+            <p className="text-xs text-indigo-200/70">Wir freuen uns immer über stimmgewaltige Unterstützung.</p>
+          </div>
+        </div>
+        <p className="text-xs text-indigo-100/80 leading-relaxed">
+          Du singst gerne im Chor, liebst A-cappella-Musik und bringst idealerweise Chorerfahrung mit? Komm gerne zu einer unverbindlichen Schnupperprobe vorbei. Schreib uns einfach kurz vorab!
+        </p>
+      </div>
+
     </div>
   );
 }
