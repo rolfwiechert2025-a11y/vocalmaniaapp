@@ -7,6 +7,11 @@ export const metadata: Metadata = {
   title: "Vocalmania",
   description: "A-cappella-Ensemble",
   manifest: "/manifest.json",
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent", // Zwingt iOS zu echtem Transparent
+  },
 };
 
 export const viewport: Viewport = {

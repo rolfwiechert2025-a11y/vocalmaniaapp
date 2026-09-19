@@ -4,8 +4,9 @@
   "description": "Öffentliche Konzerte und interne Chor-App",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "orientation": "portrait",
+  "background_color": "#0b0a1f",
+  "theme_color": "#0b0a1f",
   "icons": [
     {
       "src": "/logo_white_background.svg",
