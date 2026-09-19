@@ -24,20 +24,23 @@ export default function HomeConcertsCarousel({ konzerte }: HomeConcertsCarouselP
   const handleScroll = () => {
     if (scrollContainerRef.current) {
       const scrollLeft = scrollContainerRef.current.scrollLeft;
-      const itemWidth = scrollContainerRef.current.offsetWidth;
+      const itemWidth = scrollContainerRef.current.offsetWidth * 0.92;
       const newIndex = Math.round(scrollLeft / itemWidth);
-      setCurrentIndex(newIndex);
+      setCurrentIndex(Math.min(Math.max(newIndex, 0), konzerte.length));
     }
   };
 
   const scrollToSlide = (index: number) => {
     if (scrollContainerRef.current) {
-      const itemWidth = scrollContainerRef.current.offsetWidth;
-      scrollContainerRef.current.scrollTo({
-        left: itemWidth * index,
-        behavior: "smooth",
-      });
-      setCurrentIndex(index);
+      const container = scrollContainerRef.current;
+      const slide = container.children[index] as HTMLElement;
+      if (slide) {
+        container.scrollTo({
+          left: slide.offsetLeft - container.offsetLeft,
+          behavior: "smooth",
+        });
+        setCurrentIndex(index);
+      }
     }
   };
 
@@ -47,13 +50,14 @@ export default function HomeConcertsCarousel({ konzerte }: HomeConcertsCarouselP
 
   return (
     <div className="space-y-3">
+      {/* Scroll-Container mit exaktem Peek-Effekt für die nächste Kachel */}
       <div 
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] rounded-3xl"
+        className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] rounded-3xl gap-4"
       >
         {konzerte.map((item) => (
-          <div key={item.id} className="w-full shrink-0 snap-center">
+          <div key={item.id} className="w-[95%] sm:w-[88%] md:w-[80%] shrink-0 snap-start">
             <Link 
               href={`/konzerte/${item.id}`}
               className="group flex flex-col justify-between bg-gradient-to-br from-black/30 via-black/40 to-black/60 backdrop-blur-md rounded-3xl overflow-hidden shadow-xl border border-white/10 transition-all duration-300 hover:shadow-2xl h-full min-h-[400px]"
@@ -95,8 +99,8 @@ export default function HomeConcertsCarousel({ konzerte }: HomeConcertsCarouselP
           </div>
         ))}
 
-        {/* Letzte Kachel: Alle Konzerte (Pfad auf /konzerte korrigiert) */}
-        <div className="w-full shrink-0 snap-center">
+        {/* Letzte Kachel: Alle Konzerte */}
+        <div className="w-[92%] sm:w-[85%] md:w-[75%] shrink-0 snap-start">
           <Link 
             href="/konzerte"
             className="group flex flex-col items-center justify-center text-center bg-gradient-to-br from-violet-950/60 via-black/50 to-black/70 backdrop-blur-md rounded-3xl p-10 h-full min-h-[400px] shadow-xl border border-white/10 transition-all duration-300 hover:shadow-2xl"

@@ -23,20 +23,23 @@ export default function HomeMediaCarousel({ items }: HomeMediaCarouselProps) {
   const handleScroll = () => {
     if (scrollContainerRef.current) {
       const scrollLeft = scrollContainerRef.current.scrollLeft;
-      const itemWidth = scrollContainerRef.current.offsetWidth;
+      const itemWidth = scrollContainerRef.current.offsetWidth * 0.92;
       const newIndex = Math.round(scrollLeft / itemWidth);
-      setCurrentIndex(newIndex);
+      setCurrentIndex(Math.min(Math.max(newIndex, 0), items.length));
     }
   };
 
   const scrollToSlide = (index: number) => {
     if (scrollContainerRef.current) {
-      const itemWidth = scrollContainerRef.current.offsetWidth;
-      scrollContainerRef.current.scrollTo({
-        left: itemWidth * index,
-        behavior: "smooth",
-      });
-      setCurrentIndex(index);
+      const container = scrollContainerRef.current;
+      const slide = container.children[index] as HTMLElement;
+      if (slide) {
+        container.scrollTo({
+          left: slide.offsetLeft - container.offsetLeft,
+          behavior: "smooth",
+        });
+        setCurrentIndex(index);
+      }
     }
   };
 
@@ -46,20 +49,21 @@ export default function HomeMediaCarousel({ items }: HomeMediaCarouselProps) {
 
   return (
     <div className="space-y-3">
+      {/* Scroll-Container mit Peek-Effekt für die nächste Medien-Kachel */}
       <div 
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] rounded-3xl"
+        className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] rounded-3xl gap-4"
       >
         {items.map((item) => (
-          <div key={item.id} className="w-full shrink-0 snap-center">
+          <div key={item.id} className="w-[95%] sm:w-[88%] md:w-[80%] shrink-0 snap-start">
             <a 
               href={item.link}
               target="_blank"
               rel="noopener noreferrer"
               className="group block bg-gradient-to-br from-black/30 via-black/40 to-black/60 backdrop-blur-md rounded-3xl overflow-hidden shadow-xl border border-white/10 transition-all duration-300 hover:shadow-2xl cursor-pointer"
             >
-              {/* Bildbereich: scale-110 und -translate-y-4 kaschieren die YouTube-schwarzen Ränder oben/unten */}
+              {/* Bildbereich: scale-110 und -translate-y-3 kaschieren YouTube-Ränder */}
               <div className="relative h-64 sm:h-80 w-full overflow-hidden bg-black/40">
                 {item.vorschaubild ? (
                   <img 
@@ -96,8 +100,8 @@ export default function HomeMediaCarousel({ items }: HomeMediaCarouselProps) {
           </div>
         ))}
 
-        {/* Letzte Kachel: Mediathek öffnen */}
-        <div className="w-full shrink-0 snap-center">
+        {/* Letzte Kachel: Mediathek-Archiv */}
+        <div className="w-[92%] sm:w-[85%] md:w-[75%] shrink-0 snap-start">
           <Link 
             href="/media"
             className="group flex flex-col justify-between bg-gradient-to-br from-indigo-950/60 via-black/50 to-black/70 backdrop-blur-md rounded-3xl p-8 h-full min-h-[360px] shadow-xl border border-white/10 transition-all duration-300 hover:shadow-2xl"

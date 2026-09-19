@@ -23,20 +23,23 @@ export default function HomeAlbumCarousel({ albums }: HomeAlbumCarouselProps) {
   const handleScroll = () => {
     if (scrollContainerRef.current) {
       const scrollLeft = scrollContainerRef.current.scrollLeft;
-      const itemWidth = scrollContainerRef.current.offsetWidth;
+      const itemWidth = scrollContainerRef.current.offsetWidth * 0.92;
       const newIndex = Math.round(scrollLeft / itemWidth);
-      setCurrentIndex(newIndex);
+      setCurrentIndex(Math.min(Math.max(newIndex, 0), albums.length));
     }
   };
 
   const scrollToSlide = (index: number) => {
     if (scrollContainerRef.current) {
-      const itemWidth = scrollContainerRef.current.offsetWidth;
-      scrollContainerRef.current.scrollTo({
-        left: itemWidth * index,
-        behavior: "smooth",
-      });
-      setCurrentIndex(index);
+      const container = scrollContainerRef.current;
+      const slide = container.children[index] as HTMLElement;
+      if (slide) {
+        container.scrollTo({
+          left: slide.offsetLeft - container.offsetLeft,
+          behavior: "smooth",
+        });
+        setCurrentIndex(index);
+      }
     }
   };
 
@@ -46,13 +49,15 @@ export default function HomeAlbumCarousel({ albums }: HomeAlbumCarouselProps) {
 
   return (
     <div className="space-y-3">
+      {/* Scroll-Container ohne äußeres Padding, damit die aktive Kachel exakt sitzt */}
       <div 
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] rounded-3xl"
+        className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] rounded-3xl gap-4"
       >
         {albums.map((album) => (
-          <div key={album.id} className="w-full shrink-0 snap-center">
+          /* Kachel nimmt fast die volle Breite ein (w-[92%]), so dass rechts ein schmaler Streifen der nächsten Kachel bleibt */
+          <div key={album.id} className="w-[95%] sm:w-[88%] md:w-[80%] shrink-0 snap-start">
             <Link 
               href={album.link}
               className="group block bg-gradient-to-br from-black/30 via-black/40 to-black/60 backdrop-blur-md rounded-3xl overflow-hidden shadow-xl border border-white/10 transition-all duration-300 hover:shadow-2xl"
@@ -67,7 +72,6 @@ export default function HomeAlbumCarousel({ albums }: HomeAlbumCarouselProps) {
                 ) : (
                   <div className="flex items-center justify-center h-full text-indigo-200/40 text-xs">Kein Bild</div>
                 )}
-                {/* Exakte Anzahl aus Google Drive */}
                 <span className="absolute top-4 right-4 bg-black/60 backdrop-blur-md text-white text-xs px-3 py-1 font-semibold rounded-full border border-white/10">
                   {album.bildAnzahl} {album.bildAnzahl === 1 ? "Bild" : "Bilder"}
                 </span>
@@ -89,8 +93,8 @@ export default function HomeAlbumCarousel({ albums }: HomeAlbumCarouselProps) {
           </div>
         ))}
 
-        {/* Letzte Kachel: "Alle Alben ansehen" im unteren Bereich positioniert */}
-        <div className="w-full shrink-0 snap-center">
+        {/* Letzte Kachel: Fotoarchiv */}
+        <div className="w-[92%] sm:w-[85%] md:w-[75%] shrink-0 snap-start">
           <Link 
             href="/bilder"
             className="group flex flex-col justify-between bg-gradient-to-br from-indigo-950/60 via-black/50 to-black/70 backdrop-blur-md rounded-3xl p-8 h-full min-h-[360px] shadow-xl border border-white/10 transition-all duration-300 hover:shadow-2xl"
@@ -114,6 +118,7 @@ export default function HomeAlbumCarousel({ albums }: HomeAlbumCarouselProps) {
         </div>
       </div>
 
+      {/* Indikatoren im gewohnten Look */}
       <div className="flex justify-center items-center gap-1.5 pt-1">
         {Array.from({ length: totalSlides }).map((_, index) => (
           <button
