@@ -6,6 +6,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Vocalmania",
   description: "A-cappella-Ensemble",
+  manifest: "/manifest.json", // <--- Hier wird die Manifest-Datei verknüpft
 };
 
 export const viewport: Viewport = {
