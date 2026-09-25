@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, Suspense } from "react";
 import { useSession } from "next-auth/react";
 
 interface AppShellProps {
@@ -10,49 +10,31 @@ interface AppShellProps {
   onSearchChange?: (query: string) => void;
 }
 
-export default function AppShell({ children, onSearchChange }: AppShellProps) {
+// Interne Komponente für den Header, die sicher innerhalb einer Suspense-Grenze läuft
+function HeaderContent({ onSearchChange }: { onSearchChange?: (query: string) => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isPending, startTransition] = useTransition();
-
-  // Den Suchwert direkt aus den URL-Parametern auslesen (vermeidet State-Synchronisationsfehler)
   const searchQuery = searchParams.get("q") || "";
-
-  // Scroll-Position erkennen für den dynamischen Footer
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 40) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     if (onSearchChange) onSearchChange(query);
   };
 
-  // Löst bei Enter die Weiterleitung zur globalen Suche aus
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     const query = e.currentTarget.value;
     if (e.key === "Enter" && query.trim()) {
-      e.currentTarget.blur(); // Schließt die Handytastatur
+      e.currentTarget.blur();
       startTransition(() => {
         router.push(`/suchen?q=${encodeURIComponent(query)}`);
       });
     }
   };
 
-  // Klick auf den Account-Button mit Übergangs-Animation
   const handleProfileClick = (e: React.MouseEvent) => {
     e.preventDefault();
     startTransition(() => {
@@ -64,16 +46,6 @@ export default function AppShell({ children, onSearchChange }: AppShellProps) {
     });
   };
 
-  // Sanfte Navigation für Footer-Links mit Warte-Indikator
-  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (pathname === href) return;
-    e.preventDefault();
-    startTransition(() => {
-      router.push(href);
-    });
-  };
-
-  // Hilfsfunktion, um dynamische Initialen zu berechnen (z.B. "Rolf Wiechert" -> "RW")
   const getInitials = () => {
     if (session?.user?.name) {
       const parts = session.user.name.trim().split(" ");
@@ -91,9 +63,7 @@ export default function AppShell({ children, onSearchChange }: AppShellProps) {
   const userInitials = getInitials();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#2e1065] via-[#1e1b4b] to-[#020617] text-white relative selection:bg-indigo-500 selection:text-white">
-      
-      {/* GLOBALER LADE-INDIKATOR */}
+    <>
       {isPending && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex flex-col items-center justify-center space-y-3 transition-opacity duration-200 pointer-events-none">
           <div className="bg-black/70 border border-white/20 px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md flex items-center gap-3">
@@ -103,7 +73,6 @@ export default function AppShell({ children, onSearchChange }: AppShellProps) {
         </div>
       )}
 
-      {/* 1. SCHWEBENDER HEADER */}
       <header className="fixed top-0 left-0 right-0 z-40 pointer-events-none">
         <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#2e1065] via-[#2e1065]/70 via-[#2e1065]/30 to-transparent backdrop-blur-[2px]"></div>
 
@@ -131,7 +100,7 @@ export default function AppShell({ children, onSearchChange }: AppShellProps) {
             <input 
               type="text"
               defaultValue={searchQuery}
-              key={searchQuery} // Hält das Feld mit den URL-Parametern synchron
+              key={searchQuery}
               onChange={handleSearchInput}
               onKeyDown={handleKeyDown}
               placeholder="Suchen (Enter drücken)..."
@@ -146,7 +115,6 @@ export default function AppShell({ children, onSearchChange }: AppShellProps) {
 
           <Link 
             href="/kontakte" 
-            onClick={(e) => handleNavClick(e, "/kontakte")}
             className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-md border border-white/15 flex items-center justify-center hover:bg-black/50 transition-all shrink-0 shadow-sm text-slate-300 hover:text-white"
             title="Kontakt"
           >
@@ -157,6 +125,34 @@ export default function AppShell({ children, onSearchChange }: AppShellProps) {
 
         </div>
       </header>
+    </>
+  );
+}
+
+export default function AppShell({ children, onSearchChange }: AppShellProps) {
+  const pathname = usePathname();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 40) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[#2e1065] via-[#1e1b4b] to-[#020617] text-white relative selection:bg-indigo-500 selection:text-white">
+      
+      {/* Suspense-Grenze behebt den Vercel Prerender-Fehler bei der Nutzung von useSearchParams */}
+      <Suspense fallback={<div className="h-16" />}>
+        <HeaderContent onSearchChange={onSearchChange} />
+      </Suspense>
 
       {/* 2. DURCHLAUFENDER CONTENT */}
       <main className="pt-28 pb-36 px-4 max-w-4xl mx-auto relative z-0">
@@ -171,7 +167,6 @@ export default function AppShell({ children, onSearchChange }: AppShellProps) {
           
           <Link 
             href="/" 
-            onClick={(e) => handleNavClick(e, "/")}
             className={`flex flex-col items-center justify-center rounded-xl transition-all cursor-pointer flex-1 py-1.5 ${
               isScrolled ? "text-[10px]" : "text-[11px] sm:text-xs"
             } ${pathname === "/" ? "bg-indigo-600 text-white shadow-md font-bold" : "text-slate-300 hover:text-white hover:bg-white/10 font-medium"}`}
@@ -182,7 +177,6 @@ export default function AppShell({ children, onSearchChange }: AppShellProps) {
 
           <Link 
             href="/bilder" 
-            onClick={(e) => handleNavClick(e, "/bilder")}
             className={`flex flex-col items-center justify-center rounded-xl transition-all cursor-pointer flex-1 py-1.5 ${
               isScrolled ? "text-[10px]" : "text-[11px] sm:text-xs"
             } ${pathname.startsWith("/bilder") ? "bg-indigo-600 text-white shadow-md font-bold" : "text-slate-300 hover:text-white hover:bg-white/10 font-medium"}`}
@@ -193,7 +187,6 @@ export default function AppShell({ children, onSearchChange }: AppShellProps) {
 
           <Link 
             href="/media" 
-            onClick={(e) => handleNavClick(e, "/media")}
             className={`flex flex-col items-center justify-center rounded-xl transition-all cursor-pointer flex-1 py-1.5 ${
               isScrolled ? "text-[10px]" : "text-[11px] sm:text-xs"
             } ${pathname.startsWith("/media") ? "bg-indigo-600 text-white shadow-md font-bold" : "text-slate-300 hover:text-white hover:bg-white/10 font-medium"}`}
@@ -204,7 +197,6 @@ export default function AppShell({ children, onSearchChange }: AppShellProps) {
 
           <Link 
             href="/konzerte" 
-            onClick={(e) => handleNavClick(e, "/konzerte")}
             className={`flex flex-col items-center justify-center rounded-xl transition-all cursor-pointer flex-1 py-1.5 ${
               isScrolled ? "text-[10px]" : "text-[11px] sm:text-xs"
             } ${pathname.startsWith("/konzerte") ? "bg-indigo-600 text-white shadow-md font-bold" : "text-slate-300 hover:text-white hover:bg-white/10 font-medium"}`}
