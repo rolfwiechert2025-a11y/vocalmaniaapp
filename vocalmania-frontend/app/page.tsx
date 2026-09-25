@@ -6,6 +6,7 @@ import { fetchMediaFromDoc } from "@/app/media/page";
 import HomeAlbumCarousel from "@/components/HomeAlbumCarousel";
 import HomeConcertsCarousel from "@/components/HomeConcertsCarousel";
 import HomeMediaCarousel from "@/components/HomeMediaCarousel";
+import Link from "next/link";
 
 interface AlbumItem {
   id: string;
@@ -16,7 +17,6 @@ interface AlbumItem {
   bildAnzahl: number;
 }
 
-// Alben aus Google Drive laden
 async function fetchAlbumsFromDrive(): Promise<AlbumItem[]> {
   const rootFolderId = process.env.PUBLIC_PICTURES_ROOT_ID;
   if (!rootFolderId) return [];
@@ -67,7 +67,6 @@ async function fetchAlbumsFromDrive(): Promise<AlbumItem[]> {
   }
 }
 
-// Exakte YouTube-Thumbnail-Ermittlung
 function getYouTubeThumbnail(url: string): string | null {
   if (!url) return null;
   const fileIdMatch = url.match(/(?:\/file\/d\/|\/open\?id=|\/document\/d\/|\/d\/|d\/)([a-zA-Z0-9_-]{25,})/);
@@ -82,7 +81,15 @@ function getYouTubeThumbnail(url: string): string | null {
     : null;
 }
 
-export default async function Home() {
+// Props mit Suchparameter, den die AppShell übergeben kann
+interface HomeProps {
+  searchParams?: Promise<{ q?: string }>;
+}
+
+export default async function Home({ searchParams }: HomeProps) {
+  const resolvedParams = await searchParams;
+  const searchQuery = (resolvedParams?.q || "").toLowerCase();
+
   const albums = await fetchAlbumsFromDrive();
   const calendarEvents = await getPublicEvents();
   const rawMediaItems = await fetchMediaFromDoc(process.env.PUBLIC_MEDIA_DOC_ID || "");
@@ -105,7 +112,7 @@ export default async function Home() {
     };
   });
 
-  // Media-Einträge mappen mit erzwungener YouTube-Thumbnail-Priorität
+  // Media-Einträge mappen
   const echteMedia = rawMediaItems.map((item, index) => {
     let thumbnail = getYouTubeThumbnail(item.youtubeUrl);
     if (!thumbnail && item.vorschaubild) {
@@ -122,44 +129,77 @@ export default async function Home() {
     };
   });
 
+  // Filterung anwenden, wenn im Header etwas eingetippt wurde
+  const filteredAlbums = albums.filter(a => 
+    a.titel.toLowerCase().includes(searchQuery) || a.beschreibung.toLowerCase().includes(searchQuery)
+  );
+  const filteredKonzerte = echteKonzerte.filter(k => 
+    k.titel.toLowerCase().includes(searchQuery) || k.ort.toLowerCase().includes(searchQuery) || k.beschreibung.toLowerCase().includes(searchQuery)
+  );
+  const filteredMedia = echteMedia.filter(m => 
+    m.titel.toLowerCase().includes(searchQuery) || m.beschreibung.toLowerCase().includes(searchQuery)
+  );
+
   return (
     <div className="space-y-12 pb-16">
       
-      {/* 1. GROSSES CHOR-BILD ALS HERO-KACHEL */}
-      <div className="relative w-full h-72 md:h-96 rounded-3xl overflow-hidden shadow-2xl border border-white/10 group">
-        <Image 
-          src="/DSC_9566-2-fertig.jpg" 
-          alt="Vocalmania Chor" 
-          fill 
-          className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-700 ease-out"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-[#1e1b4b]/40 to-transparent"></div>
-        
-        <div className="absolute bottom-6 left-0 right-0 z-10 px-6 md:px-8 space-y-2">
-          <span className="text-xs font-bold uppercase tracking-[0.25em] bg-indigo-600/80 backdrop-blur-md text-white px-3 py-1 rounded-full">
-            A-cappella-Ensemble
-          </span>
-          <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white drop-shadow-md">
-            Vocalmania
-          </h1>
-          <p className="text-xs md:text-sm text-indigo-200/90 max-w-lg drop-shadow">
-            Willkommen im digitalen Zuhause unseres Chors. Erleben Sie Musik, Bilder und unvergessliche Momente.
-          </p>
+      {/* 1. GROSSES CHOR-BILD ALS HERO-KACHEL (Wird bei Suche ausgeblendet, um Platz für Ergebnisse zu machen) */}
+      {!searchQuery && (
+        <div className="relative w-full h-72 md:h-96 rounded-3xl overflow-hidden shadow-2xl border border-white/10 group">
+          <Image 
+            src="/DSC_9566-2-fertig.jpg" 
+            alt="Vocalmania Chor" 
+            fill 
+            className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-700 ease-out"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-[#1e1b4b]/40 to-transparent"></div>
+          
+          <div className="absolute bottom-6 left-0 right-0 z-10 px-6 md:px-8 space-y-2">
+            <span className="text-xs font-bold uppercase tracking-[0.25em] bg-indigo-600/80 backdrop-blur-md text-white px-3 py-1 rounded-full">
+              A-cappella-Ensemble
+            </span>
+            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white drop-shadow-md">
+              Vocalmania
+            </h1>
+            <p className="text-xs md:text-sm text-indigo-200/90 max-w-lg drop-shadow">
+              Willkommen im digitalen Zuhause unseres Chors. Erleben Sie Musik, Bilder und unvergessliche Momente.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Such-Info, falls aktiv */}
+      {searchQuery && (
+        <div className="p-4 bg-indigo-950/60 border border-indigo-500/30 rounded-2xl flex items-center justify-between">
+          <p className="text-xs text-indigo-200">
+            Suchergebnisse für: <span className="font-bold text-white">„{searchQuery}“</span>
+          </p>
+<Link href="/" className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded-xl text-white transition-colors">
+            Zurücksetzen ✕
+          </Link>
+        </div>
+      )}
 
       {/* 2. KARUSSELL: FOTOALBEN */}
-      <HomeAlbumCarousel albums={albums} />
+      {filteredAlbums.length > 0 && (
+        <HomeAlbumCarousel albums={filteredAlbums} />
+      )}
 
       {/* 3. KARUSSELL: KONZERTE */}
-      {echteKonzerte.length > 0 && (
-        <HomeConcertsCarousel konzerte={echteKonzerte} />
+      {filteredKonzerte.length > 0 && (
+        <HomeConcertsCarousel konzerte={filteredKonzerte} />
       )}
 
       {/* 4. KARUSSELL: MEDIA */}
-      {echteMedia.length > 0 && (
-        <HomeMediaCarousel items={echteMedia} />
+      {filteredMedia.length > 0 && (
+        <HomeMediaCarousel items={filteredMedia} />
+      )}
+
+      {searchQuery && filteredAlbums.length === 0 && filteredKonzerte.length === 0 && filteredMedia.length === 0 && (
+        <div className="text-center py-16 text-indigo-200/60 text-sm">
+          Keine passenden Einträge auf der Startseite gefunden.
+        </div>
       )}
 
     </div>

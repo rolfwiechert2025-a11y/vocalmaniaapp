@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useTransition } from "react";
 import { useSession } from "next-auth/react";
 
@@ -13,12 +13,14 @@ interface AppShellProps {
 export default function AppShell({ children, onSearchChange }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isScrolled, setIsScrolled] = useState(false);
   
-  // Next.js Transition-Hook erkennt im Hintergrund laufende Seitenwechsel & Fetches
+  const [isScrolled, setIsScrolled] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  // Den Suchwert direkt aus den URL-Parametern auslesen (vermeidet State-Synchronisationsfehler)
+  const searchQuery = searchParams.get("q") || "";
 
   // Scroll-Position erkennen für den dynamischen Footer
   useEffect(() => {
@@ -35,8 +37,19 @@ export default function AppShell({ children, onSearchChange }: AppShellProps) {
   }, []);
 
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    if (onSearchChange) onSearchChange(e.target.value);
+    const query = e.target.value;
+    if (onSearchChange) onSearchChange(query);
+  };
+
+  // Löst bei Enter die Weiterleitung zur globalen Suche aus
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const query = e.currentTarget.value;
+    if (e.key === "Enter" && query.trim()) {
+      e.currentTarget.blur(); // Schließt die Handytastatur
+      startTransition(() => {
+        router.push(`/suchen?q=${encodeURIComponent(query)}`);
+      });
+    }
   };
 
   // Klick auf den Account-Button mit Übergangs-Animation
@@ -53,7 +66,7 @@ export default function AppShell({ children, onSearchChange }: AppShellProps) {
 
   // Sanfte Navigation für Footer-Links mit Warte-Indikator
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (pathname === href) return; // Schon auf der Seite
+    if (pathname === href) return;
     e.preventDefault();
     startTransition(() => {
       router.push(href);
@@ -78,10 +91,9 @@ export default function AppShell({ children, onSearchChange }: AppShellProps) {
   const userInitials = getInitials();
 
   return (
-    /* Globaler Vocalmania-Farbverlauf: Oben heller/wärmer, unten tiefes Dunkelblau/Schwarz */
     <div className="min-h-screen bg-gradient-to-b from-[#2e1065] via-[#1e1b4b] to-[#020617] text-white relative selection:bg-indigo-500 selection:text-white">
       
-      {/* GLOBALER LADE-INDIKATOR (Wird eingeblendet, sobald eine Seite lädt oder ein Fetch läuft) */}
+      {/* GLOBALER LADE-INDIKATOR */}
       {isPending && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex flex-col items-center justify-center space-y-3 transition-opacity duration-200 pointer-events-none">
           <div className="bg-black/70 border border-white/20 px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md flex items-center gap-3">
@@ -118,9 +130,11 @@ export default function AppShell({ children, onSearchChange }: AppShellProps) {
           <div className="relative flex-1 max-w-md">
             <input 
               type="text"
-              value={searchQuery}
+              defaultValue={searchQuery}
+              key={searchQuery} // Hält das Feld mit den URL-Parametern synchron
               onChange={handleSearchInput}
-              placeholder="Suchen..."
+              onKeyDown={handleKeyDown}
+              placeholder="Suchen (Enter drücken)..."
               className="w-full bg-black/30 backdrop-blur-md border border-white/15 rounded-full py-2 pl-11 pr-4 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all shadow-inner"
             />
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-indigo-300 z-10">
@@ -149,7 +163,7 @@ export default function AppShell({ children, onSearchChange }: AppShellProps) {
         {children}
       </main>
 
-      {/* 3. SCHWEBENDE FOOTER-NAVIGATION (Icons & Texte zentriert untereinander) */}
+      {/* 3. SCHWEBENDE FOOTER-NAVIGATION */}
       <nav className="fixed bottom-4 left-3 right-3 sm:left-4 sm:right-4 z-40 flex justify-center pointer-events-none">
         <div className={`pointer-events-auto bg-black/50 backdrop-blur-2xl border border-white/15 shadow-2xl rounded-2xl sm:rounded-full transition-all duration-300 flex items-center justify-around w-full max-w-md ${
           isScrolled ? "p-1.5 scale-95 opacity-90 shadow-lg" : "p-2 sm:px-4 sm:py-2.5 scale-100 opacity-100"
