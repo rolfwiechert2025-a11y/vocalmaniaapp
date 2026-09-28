@@ -84,7 +84,16 @@ export default async function InternDashboardPage() {
           </div>
           <span className="text-indigo-300 font-bold group-hover:translate-x-1 transition-transform">&rarr;</span>
         </Link>
-
+        <Link href="/intern/reporting" className="flex items-center justify-between p-4 sm:p-5 hover:bg-white/5 transition-colors group">
+          <div className="flex items-center gap-3.5">
+            <span className="text-lg">🎼</span>
+            <div>
+              <h2 className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors">Reporting</h2>
+              <p className="text-[11px] text-indigo-200/70">Anwesenheitsberichte erstellen</p>
+            </div>
+          </div>
+          <span className="text-indigo-300 font-bold group-hover:translate-x-1 transition-transform">&rarr;</span>
+        </Link>
       </div>
 
       {/* SEPARATER ABMELDEN-BLOCK (Unten separat wie auf dem Referenzbild) */}

@@ -111,7 +111,7 @@ export default async function Home({ searchParams }: HomeProps) {
       beschreibung: event.resolvedShortDesc || "Keine Beschreibung verfügbar."
     };
   });
-
+// TODO
   // Media-Einträge mappen
   const echteMedia = rawMediaItems.map((item, index) => {
     let thumbnail = getYouTubeThumbnail(item.youtubeUrl);

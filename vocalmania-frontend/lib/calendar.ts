@@ -34,7 +34,8 @@ export interface CalendarEvent {
   ticketUrl?: string | null;
 
   // Interne Felder für Proben & Rückmeldungen
-  userStatus?: 'yes' | 'maybe' | 'no' | null;
+  userStatus?: 'yes' | 'maybe' | 'no' | null;          // Vorab-Planung
+  userAttendanceStatus?: 'yes' | 'maybe' | 'no' | null; // Finale Nachbereitung (Anwesend/Entschuldigt/Unentschuldigt)
   attendanceCounts?: {
     yes: number;
     maybe: number;
@@ -46,6 +47,7 @@ export interface CalendarEvent {
     nachname: string;
     registerShort: string;
     status: 'yes' | 'maybe' | 'no' | null;
+    attendanceStatus?: 'yes' | 'maybe' | 'no' | null;
     updatedAt?: string;
   }>;
 }
@@ -142,7 +144,6 @@ export async function getPublicEvents(): Promise<CalendarEvent[]> {
           description: rawDescription,
           start: event.start,
           location: finalLocation,
-          // Kompatibilität für öffentliche Ansichten
           titel: event.summary || "Kein Titel",
           datum: formattedDate,
           ort: finalLocation,
@@ -166,15 +167,19 @@ export async function getKonzertById(id: string): Promise<CalendarEvent | null> 
   return events.find((e) => e.id === id) || null;
 }
 
-// Interne Events laden (inkl. vollständiger Mitglieder- und Rückmeldungs-Logik pro Event)
+// Interne Events laden (inkl. vollständiger Mitglieder-, Planungs- und Anwesenheits-Logik pro Event)
 export async function fetchInternalCalendarEvents(userEmail: string): Promise<CalendarEvent[]> {
   try {
     const auth = getGoogleAuth();
     const calendar = google.calendar({ version: 'v3', auth });
 
+// Wir setzen den Start auf vor 3 Tagen, damit auch gerade vergangene Termine noch da sind
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
     const response = await calendar.events.list({
       calendarId: process.env.INTERNAL_CALENDAR_ID || process.env.PUBLIC_CALENDAR_ID,
-      timeMin: new Date().toISOString(),
+      timeMin: threeDaysAgo.toISOString(), 
       singleEvents: true,
       orderBy: 'startTime',
     });
@@ -188,7 +193,7 @@ export async function fetchInternalCalendarEvents(userEmail: string): Promise<Ca
     );
     const currentMemberId = memberResult.rows.length > 0 ? memberResult.rows[0].id : null;
 
-    // 2. Hole einmalig alle Mitglieder und deren Register (Basis für alle Events)
+    // 2. Hole einmalig alle Mitglieder und deren Register
     const membersResult = await pool.query(
       `SELECT m.id as member_id, m.vorname, m.nachname, r.description_short as register_short
        FROM members m
@@ -197,14 +202,13 @@ export async function fetchInternalCalendarEvents(userEmail: string): Promise<Ca
     );
     const allMembers = membersResult.rows;
 
-    // 3. Verarbeite jeden Kalendertermin und mappe die Datenbank-Rückmeldungen
+    // 3. Verarbeite jeden Kalendertermin
     const processedEvents: CalendarEvent[] = await Promise.all(
       events.map(async (event) => {
         const eventId = event.id || Math.random().toString();
 
-        // Hole alle Attendance-Einträge für diesen konkreten Termin
         const attendanceResult = await pool.query(
-          `SELECT member_id, status, updated_at FROM event_attendance WHERE event_id = $1`,
+          `SELECT member_id, status, attendance_status, updated_at FROM event_attendance WHERE event_id = $1`,
           [eventId]
         );
         const eventAttendance = attendanceResult.rows;
@@ -217,25 +221,29 @@ export async function fetchInternalCalendarEvents(userEmail: string): Promise<Ca
             vorname: member.vorname,
             nachname: member.nachname,
             registerShort: member.register_short || 'Unbekannt',
-            status: att ? att.status : null,
+            // Wichtig: Nur wenn explizit ein Status in der DB steht, wird er für die Planung übernommen
+            status: att && att.status ? att.status : null,
+            attendanceStatus: att && att.attendance_status ? att.attendance_status : 'no',
             updatedAt: att ? att.updated_at : null,
           };
         });
 
         // Ermittle den eigenen Status des angemeldeten Users
         let userStatus: 'yes' | 'maybe' | 'no' | null = null;
+        let userAttendanceStatus: 'yes' | 'maybe' | 'no' | null = 'no';
+
         if (currentMemberId) {
           const ownAtt = eventAttendance.find(a => a.member_id === currentMemberId);
           if (ownAtt) {
-            userStatus = ownAtt.status;
+            userStatus = ownAtt.status || null;
+            userAttendanceStatus = ownAtt.attendance_status || 'no';
           }
         }
 
-        // Berechne die Zählerstände
-        const responded = attendeesList.filter(a => a.status !== null);
-        const yes = responded.filter(r => r.status === 'yes').length;
-        const maybe = responded.filter(r => r.status === 'maybe').length;
-        const no = responded.filter(r => r.status === 'no').length;
+        // Exakte Zähler für die Vorab-Planung (nur echte Klicks zählen)
+        const yes = attendeesList.filter(r => r.status === 'yes').length;
+        const maybe = attendeesList.filter(r => r.status === 'maybe').length;
+        const no = attendeesList.filter(r => r.status === 'no').length;
 
         return {
           id: eventId,
@@ -244,6 +252,7 @@ export async function fetchInternalCalendarEvents(userEmail: string): Promise<Ca
           start: event.start,
           location: event.location || "",
           userStatus,
+          userAttendanceStatus,
           attendanceCounts: { yes, maybe, no },
           attendeesList,
         };

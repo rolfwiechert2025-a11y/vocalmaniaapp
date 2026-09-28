@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { eventId, status } = await request.json();
+    const { eventId, status, mode = "planning", targetMemberId } = await request.json();
     const userEmail = session.user.email;
 
     if (!eventId || !["yes", "maybe", "no"].includes(status)) {
@@ -33,18 +33,31 @@ export async function POST(request: Request) {
       );
     }
 
-    const memberId = memberResult.rows[0].id;
+    const currentMemberId = memberResult.rows[0].id;
+    const memberIdToUpdate = targetMemberId || currentMemberId;
 
-    const query = `
-      INSERT INTO event_attendance (event_id, member_id, status, updated_at)
-      VALUES ($1, $2, $3, NOW())
-      ON CONFLICT (event_id, member_id)
-      DO UPDATE SET status = EXCLUDED.status, updated_at = NOW();
-    `;
+    // STRIKTE TRENNUNG: Entweder nur Anwesenheit ODER nur Vorab-Planung aktualisieren
+    if (mode === "attendance") {
+      // 1. NUR ANWESENHEIT SPEICHERN (attendance_status) - rührt 'status' (Planung) niemals an!
+      const query = `
+        INSERT INTO event_attendance (event_id, member_id, attendance_status, updated_at)
+        VALUES ($1, $2, $3, NOW())
+        ON CONFLICT (event_id, member_id)
+        DO UPDATE SET attendance_status = EXCLUDED.attendance_status, updated_at = NOW();
+      `;
+      await pool.query(query, [eventId, memberIdToUpdate, status]);
+    } else {
+      // 2. NUR VORAB-PLANUNG SPEICHERN (status) - rührt 'attendance_status' nicht an!
+      const query = `
+        INSERT INTO event_attendance (event_id, member_id, status, updated_at)
+        VALUES ($1, $2, $3, NOW())
+        ON CONFLICT (event_id, member_id)
+        DO UPDATE SET status = EXCLUDED.status, updated_at = NOW();
+      `;
+      await pool.query(query, [eventId, memberIdToUpdate, status]);
+    }
 
-    await pool.query(query, [eventId, memberId, status]);
-
-    // Alle Mitglieder und die Attendance-Daten für dieses Event sauber getrennt abrufen
+    // Alle Mitglieder und die Attendance-Daten für dieses Event abrufen
     const membersResult = await pool.query(
       `SELECT m.id as member_id, m.vorname, m.nachname, r.description_short as register_short
        FROM members m
@@ -54,7 +67,7 @@ export async function POST(request: Request) {
     const allMembers = membersResult.rows;
 
     const attendanceResult = await pool.query(
-      `SELECT member_id, status, updated_at FROM event_attendance WHERE event_id = $1`,
+      `SELECT member_id, status, attendance_status, updated_at FROM event_attendance WHERE event_id = $1`,
       [eventId]
     );
     const eventAttendance = attendanceResult.rows;
@@ -66,15 +79,16 @@ export async function POST(request: Request) {
         vorname: member.vorname,
         nachname: member.nachname,
         registerShort: member.register_short || 'Unbekannt',
-        status: att ? att.status : null,
+        status: att && att.status ? att.status : null, // Nur echter Status oder null
+        attendanceStatus: att && att.attendance_status ? att.attendance_status : 'no',
         updatedAt: att ? att.updated_at : null,
       };
     });
 
-    const responded = attendeesList.filter(a => a.status !== null);
-    const yes = responded.filter(r => r.status === 'yes').length;
-    const maybe = responded.filter(r => r.status === 'maybe').length;
-    const no = responded.filter(r => r.status === 'no').length;
+    // Zähler für die Vorab-Planung (nur echte Klicks zählen)
+    const yes = attendeesList.filter(r => r.status === 'yes').length;
+    const maybe = attendeesList.filter(r => r.status === 'maybe').length;
+    const no = attendeesList.filter(r => r.status === 'no').length;
 
     return NextResponse.json({ 
       success: true, 
