@@ -72,7 +72,7 @@ export default function MembersClient({ initialMembers, registers }: MembersClie
     setErrorMessage("");
     setIsModalOpen(true);
   };
-
+// test
   const openEditModal = (member: Member) => {
     setEditingMemberId(member.id);
     
