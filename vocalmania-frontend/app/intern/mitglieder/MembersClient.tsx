@@ -119,12 +119,29 @@ export default function MembersClient({ initialMembers, registers }: MembersClie
       formattedBirthday = formattedBirthday.split("T")[0];
     }
 
+    // --- MOBILNUMMER FÜR WHATSAPP BEREINIGEN ---
+    let cleanedNumber = form.mobil_number ? form.mobil_number.trim() : "";
+    if (cleanedNumber) {
+      // Leerzeichen und Sonderzeichen entfernen
+      cleanedNumber = cleanedNumber.replace(/[\s\-\(\)]/g, "");
+      
+      // Wenn sie mit '0' beginnt (z.B. 0170...), ersetze sie durch '+49'
+      if (cleanedNumber.startsWith("0")) {
+        cleanedNumber = "+49" + cleanedNumber.slice(1);
+      }
+      // Falls das '+' fehlt, aber mit '49' beginnt
+      else if (cleanedNumber.startsWith("49")) {
+        cleanedNumber = "+" + cleanedNumber;
+      }
+    }
+    // ------------------------------------------
+
     const payload = {
       id: editingMemberId,
       vorname: form.vorname ? form.vorname.trim() : "",
       nachname: form.nachname ? form.nachname.trim() : "",
       gmail: form.gmail ? form.gmail.trim() : "",
-      mobil_number: form.mobil_number ? form.mobil_number.trim() : "",
+      mobil_number: cleanedNumber, // Hier wird die bereinigte Nummer übergeben
       street_name_and_house_number: form.street_name_and_house_number ? form.street_name_and_house_number.trim() : "",
       town: form.town ? form.town.trim() : "",
       plz: form.plz ? form.plz.trim() : "",
@@ -272,7 +289,7 @@ export default function MembersClient({ initialMembers, registers }: MembersClie
         })}
       </div>
 
-      {/* MODAL (ERSTELLEN / BEARBEITEN) - Ohne doppelte Scrollbar */}
+      {/* MODAL (ERSTELLEN / BEARBEITEN) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[999999] bg-black/80 backdrop-blur-md flex items-start justify-center pt-24 sm:pt-28 pb-12 px-4 overflow-hidden">
           <div className="bg-[#1e1b4b] w-full max-w-lg p-6 sm:p-8 border border-white/15 rounded-3xl shadow-2xl space-y-5 max-h-[80vh] overflow-y-auto text-white">
@@ -354,10 +371,11 @@ export default function MembersClient({ initialMembers, registers }: MembersClie
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-indigo-200/80 mb-1">Mobilnummer</label>
+                <label className="block text-xs font-bold text-indigo-200/80 mb-1">Mobilnummer (für WhatsApp)</label>
                 <input
                   type="text"
                   name="mobil_number"
+                  placeholder="z.B. 0170 1234567 oder +49170..."
                   value={form.mobil_number}
                   onChange={handleChange}
                   className="w-full px-4 py-2 bg-black/40 border border-white/15 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
