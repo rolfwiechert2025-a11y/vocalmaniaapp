@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     const rehearsalDate = "Mittwoch, 01.10.2026";
     const rehearsalTime = "19:30";
     const members = [
-      { vorname: "Rolf", mobil_number: "+4915752429035" },
+      { vorname: "Rolf", mobil_number: "+4915752429035", register: "Bass 1" },
       // ... weitere Mitglieder
     ];
 
@@ -36,7 +36,8 @@ export async function GET(request: Request) {
           contentVariables: JSON.stringify({
             "1": member.vorname,
             "2": rehearsalDate,
-            "3": rehearsalTime,
+            "4": rehearsalTime,
+            "3": member.register
           }),
           from: process.env.TWILIO_WHATSAPP_FROM,
           to: `whatsapp:${member.mobil_number}`,
