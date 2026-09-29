@@ -18,7 +18,7 @@ export async function GET(request: Request) {
 
     // Dummy-Daten für das Beispiel:
     const rehearsalDate = "Mittwoch, 01.10.2026";
-    const rehearsalTime = "19:30";
+    const rehearsalTime = "19:30 Uhr";
     const members = [
       { vorname: "Rolf", mobil_number: "+4915752429035", register: "Bass 1" },
       // ... weitere Mitglieder
